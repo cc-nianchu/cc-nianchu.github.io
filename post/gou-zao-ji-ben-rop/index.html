@@ -1,31 +1,110 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://cc-nianchu.github.io</id>
-    <title>nianchu</title>
-    <updated>2021-07-14T01:14:18.189Z</updated>
-    <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://cc-nianchu.github.io"/>
-    <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
-    <subtitle>nianchu的blog</subtitle>
-    <logo>https://cc-nianchu.github.io/images/avatar.png</logo>
-    <icon>https://cc-nianchu.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2021, nianchu</rights>
-    <entry>
-        <title type="html"><![CDATA[构造基本rop]]></title>
-        <id>https://cc-nianchu.github.io/post/gou-zao-ji-ben-rop/</id>
-        <link href="https://cc-nianchu.github.io/post/gou-zao-ji-ben-rop/">
-        </link>
-        <updated>2021-07-14T00:55:46.000Z</updated>
-        <summary type="html"><![CDATA[<pre><code> 能构造rop的题目得满足一下条件：
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>构造基本rop | nianchu</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://cc-nianchu.github.io/favicon.ico?v=1626225214186">
+<link rel="stylesheet" href="https://cc-nianchu.github.io/styles/main.css">
+
+
+  
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css" />
+  
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content=" 能构造rop的题目得满足一下条件：
         程序存在溢出，并且可以控制返回地址。
         可以找到满足条件的 gadgets 以及相应 gadgets 的地址。
-</code></pre>
-<p>如果 gadgets 每次的地址是不固定的，那我们就需要想办法动态获取对应的地址了。😳<br>
-题目ret2text<br>
-ret2text 即控制程序执行程序本身已有的的代码 (.text)。其实，这种攻击方法是一种笼统的描述。我们控制执行程序已有的代码的时候也可以控制程序执行好几段不相邻的程序已有的代码 (也就是 gadgets)，这就是我们所要说的 ROP;<br>
-做题目前首先得查看一下程序的保护机制</p>
-]]></summary>
-        <content type="html"><![CDATA[<pre><code> 能构造rop的题目得满足一下条件：
+
+如果 gadgets 每次的地址是不固定的，那我们就需要想..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://cc-nianchu.github.io">
+        <img src="https://cc-nianchu.github.io/images/avatar.png?v=1626225214186" class="site-logo">
+        <h1 class="site-title">nianchu</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      nianchu的blog
+    </div>
+    <div class="site-footer">
+      Powered by <a >nianchu</a> | <a class="rss" href="https://cc-nianchu.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">构造基本rop</h2>
+            <div class="post-date">2021-07-14</div>
+            
+            <div class="post-content" v-pre>
+              <pre><code> 能构造rop的题目得满足一下条件：
         程序存在溢出，并且可以控制返回地址。
         可以找到满足条件的 gadgets 以及相应 gadgets 的地址。
 </code></pre>
@@ -131,18 +210,77 @@ payload='a'*(0x6c+4)+p32(bin_str)<br>
 q.sendline(payload)<br>
 q.interactive()</p>
 <!-- more -->
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[test]]></title>
-        <id>https://cc-nianchu.github.io/post/test/</id>
-        <link href="https://cc-nianchu.github.io/post/test/">
-        </link>
-        <updated>2021-07-12T02:04:27.000Z</updated>
-        <content type="html"><![CDATA[<p>111111111111111test<br>
-test<br>
-22test😀<br>
-<img src="https://cc-nianchu.github.io/post-images/1626055508704.jpg" alt="" loading="lazy"></p>
-]]></content>
-    </entry>
-</feed>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://cc-nianchu.github.io/post/test/">
+                  <h3 class="post-title">
+                    test
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+
+              
+                <div id="disqus_thread" data-aos="fade-in"></div>
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+  
+
+  
+    <script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+    <script>
+
+    var options = {
+      shortname: '',
+      apikey: '',
+    }
+    if ('') {
+      options.api = ''
+    }
+    var dsqjs = new DisqusJS(options)
+
+    </script>
+  
+
+
+
+
+  </body>
+</html>
