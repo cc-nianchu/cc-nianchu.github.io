@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>标签列表 | nianchu</title>
+<title>rsa加密 | nianchu</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -12,13 +12,23 @@
 <link rel="stylesheet" href="https://cc-nianchu.github.io/styles/main.css">
 
 
+  
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css" />
+  
+
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
 
 
-    <meta name="description" content="nianchu的blog">
+    <meta name="description" content="attachment.txt:
+Premise: Enumerate the alphabet by 0、1、2、.....  、25
+Using the RSA system 
+Encryption:0156 0821 1616 0041..." />
+    <meta name="keywords" content="" />
   </head>
   <body>
     <div id="app" class="main">
@@ -88,10 +98,44 @@
 
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
-          <h2 class="tag-list-title">标签列表</h2>
-          <div class="tags-container">
+          <div class="post-detail">
+            <h2 class="post-title">rsa加密</h2>
+            <div class="post-date">2022-09-17</div>
             
+            <div class="post-content" v-pre>
+              <p>attachment.txt:</p>
+<pre><code>Premise: Enumerate the alphabet by 0、1、2、.....  、25
+Using the RSA system 
+Encryption:0156 0821 1616 0041 0140 2130 1616 0793
+Public Key:2537 and 13
+Private Key:2537 and 937
+
+flag: wctf2020{Decryption}
+</code></pre>
+<p>并且给了密钥，密文。直接写脚本解就完事了。<br>
+exp:</p>
+<pre><code>en=[156,821,1616,41,140,2130,1616,793]
+import string
+table=string.ascii_lowercase
+print(table)
+for i in en:
+print(table[pow(i,937,2537)],end=&quot;&quot;)
+</code></pre>
+
+            </div>
+            
+            
+
+            
+              
+
+              
+                <div id="disqus_thread" data-aos="fade-in"></div>
+              
+            
+
           </div>
+
         </div>
       </div>
     </div>
@@ -116,6 +160,26 @@ var app = new Vue({
     hljs.initHighlightingOnLoad()
   </script>
 
+
+
+
+  
+
+  
+    <script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+    <script>
+
+    var options = {
+      shortname: '',
+      apikey: '',
+    }
+    if ('') {
+      options.api = ''
+    }
+    var dsqjs = new DisqusJS(options)
+
+    </script>
+  
 
 
 

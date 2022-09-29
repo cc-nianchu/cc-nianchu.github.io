@@ -1,22 +1,112 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://cc-nianchu.github.io</id>
-    <title>nianchu</title>
-    <updated>2022-09-29T03:23:58.553Z</updated>
-    <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://cc-nianchu.github.io"/>
-    <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
-    <subtitle>nianchu的blog</subtitle>
-    <logo>https://cc-nianchu.github.io/images/avatar.png</logo>
-    <icon>https://cc-nianchu.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2022, nianchu</rights>
-    <entry>
-        <title type="html"><![CDATA[buu 的 WUSTCTF2020 佛说：只能四天]]></title>
-        <id>https://cc-nianchu.github.io/post/buu-zuhemima/</id>
-        <link href="https://cc-nianchu.github.io/post/buu-zuhemima/">
-        </link>
-        <updated>2022-09-20T03:29:47.000Z</updated>
-        <content type="html"><![CDATA[<h4 id="下载附件后得到三个附件">下载附件后得到三个附件</h4>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>buu 的 WUSTCTF2020 佛说：只能四天 | nianchu</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://cc-nianchu.github.io/favicon.ico?v=1664421828832">
+<link rel="stylesheet" href="https://cc-nianchu.github.io/styles/main.css">
+
+
+  
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css" />
+  
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="下载附件后得到三个附件
+hint.txt:
+1. 虽然有点不环保，但hint好像是一次性的，得到后就没有利用价值了。
+2. 凯撒不是最后一步，by the way，凯撒为什么叫做凯撒？
+
+题目.txt:
+尊即寂修我劫修如婆愍闍嚤婆莊愍耨羅嚴..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://cc-nianchu.github.io">
+        <img src="https://cc-nianchu.github.io/images/avatar.png?v=1664421828832" class="site-logo">
+        <h1 class="site-title">nianchu</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      nianchu的blog
+    </div>
+    <div class="site-footer">
+      Powered by <a >nianchu</a> | <a class="rss" href="https://cc-nianchu.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">buu 的 WUSTCTF2020 佛说：只能四天</h2>
+            <div class="post-date">2022-09-20</div>
+            
+            <div class="post-content" v-pre>
+              <h4 id="下载附件后得到三个附件">下载附件后得到三个附件</h4>
 <p>hint.txt:</p>
 <pre><code>1. 虽然有点不环保，但hint好像是一次性的，得到后就没有利用价值了。
 2. 凯撒不是最后一步，by the way，凯撒为什么叫做凯撒？
@@ -59,32 +149,77 @@
 <p>得：</p>
 <pre><code>  wctf2020{ni_hao_xiang_xiang_da_wo}
 </code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[rsa加密]]></title>
-        <id>https://cc-nianchu.github.io/post/rsa-jia-mi/</id>
-        <link href="https://cc-nianchu.github.io/post/rsa-jia-mi/">
-        </link>
-        <updated>2022-09-17T03:21:56.000Z</updated>
-        <content type="html"><![CDATA[<p>attachment.txt:</p>
-<pre><code>Premise: Enumerate the alphabet by 0、1、2、.....  、25
-Using the RSA system 
-Encryption:0156 0821 1616 0041 0140 2130 1616 0793
-Public Key:2537 and 13
-Private Key:2537 and 937
 
-flag: wctf2020{Decryption}
-</code></pre>
-<p>并且给了密钥，密文。直接写脚本解就完事了。<br>
-exp:</p>
-<pre><code>en=[156,821,1616,41,140,2130,1616,793]
-import string
-table=string.ascii_lowercase
-print(table)
-for i in en:
-print(table[pow(i,937,2537)],end=&quot;&quot;)
-</code></pre>
-]]></content>
-    </entry>
-</feed>
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://cc-nianchu.github.io/post/rsa-jia-mi/">
+                  <h3 class="post-title">
+                    rsa加密
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+
+              
+                <div id="disqus_thread" data-aos="fade-in"></div>
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+  <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>
+    hljs.initHighlightingOnLoad()
+  </script>
+
+
+
+
+  
+
+  
+    <script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+    <script>
+
+    var options = {
+      shortname: '',
+      apikey: '',
+    }
+    if ('') {
+      options.api = ''
+    }
+    var dsqjs = new DisqusJS(options)
+
+    </script>
+  
+
+
+
+
+  </body>
+</html>
