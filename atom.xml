@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cc-nianchu.github.io</id>
     <title>nianchu</title>
-    <updated>2022-09-29T05:00:02.824Z</updated>
+    <updated>2022-10-13T05:18:54.217Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cc-nianchu.github.io"/>
     <link rel="self" href="https://cc-nianchu.github.io/atom.xml"/>
@@ -11,12 +11,13 @@
     <icon>https://cc-nianchu.github.io/favicon.ico</icon>
     <rights>All rights reserved 2022, nianchu</rights>
     <entry>
-        <title type="html"><![CDATA[buu 的 WUSTCTF2020 佛说：只能四天]]></title>
+        <title type="html"><![CDATA[buu 简单题目]]></title>
         <id>https://cc-nianchu.github.io/post/buu-zuhemima/</id>
         <link href="https://cc-nianchu.github.io/post/buu-zuhemima/">
         </link>
         <updated>2022-09-20T03:29:47.000Z</updated>
-        <content type="html"><![CDATA[<h4 id="下载附件后得到三个附件">下载附件后得到三个附件</h4>
+        <content type="html"><![CDATA[<h4 id="佛说只能四天">佛说只能四天</h4>
+<p>下载附件后得到三个附件</p>
 <p>hint.txt:</p>
 <pre><code>1. 虽然有点不环保，但hint好像是一次性的，得到后就没有利用价值了。
 2. 凯撒不是最后一步，by the way，凯撒为什么叫做凯撒？
@@ -59,7 +60,7 @@
 <p>得：</p>
 <pre><code>  wctf2020{ni_hao_xiang_xiang_da_wo}
 </code></pre>
-<h2 id="mrctf2020vigenere">[MRCTF2020]vigenere</h2>
+<h4 id="mrctf2020vigenere">[MRCTF2020]vigenere</h4>
 <p>里面有一个密文和一个py文件</p>
 <pre><code>g vjganxsymda ux ylt vtvjttajwsgt bl udfteyhfgt
 oe btlc ckjwc qnxdta 
@@ -86,6 +87,36 @@ xqev vy ewgis balicrxw hvnczg hvppq efr, eyksxi pqj mshteyutvt ntv hygye twerry.
 最后看了wp发现是一个在线网站就可以破密语了<br>
 甚至都不需要密钥<br>
 <a href="https://www.guballa.de/vigenere-solver">vigenere</a></p>
+<p>####rabbit<br>
+附件:<br>
+<img src="https://cc-nianchu.github.io/post-images/1665623323061.png" alt="" loading="lazy"></p>
+<pre><code>U2FsdGVkX1/+ydnDPowGbjjJXhZxm2MP2AgI
+</code></pre>
+<p>一开始看到这个密语是完全不知道什么意思的  然后根据题目的rabbit的提示<br>
+然后了解到 rabbit高速流密码有以下三个特点</p>
+<pre><code>- 由26个英文大小写字母、=、+、/组成
+- 以U2FsdGVkX1开头
+- 可能以=结尾
+</code></pre>
+<p><a href="https://www.sojson.com/encrypt_rabbit.html">rabbit加密</a><br>
+flag{Cute_Rabbit}<br>
+####RSA<br>
+附件:</p>
+<pre><code>在一次RSA密钥对生成中，假设p=473398607161，q=4511491，e=17
+求解出d作为flag提交
+</code></pre>
+<p>直接用软件(代码也可以)<br>
+<img src="https://cc-nianchu.github.io/post-images/1665624094942.png" alt="" loading="lazy"><br>
+根据要求输入q,p,e的值就可以了<br>
+flag{125631357777427553}<br>
+####世上无难事<br>
+附件:</p>
+<pre><code>VIZZB IFIUOJBWO NVXAP OBC XZZ UKHVN IFIUOJBWO HB XVIXW XAW VXFI X QIXN VBD KQ IFIUOJBWO WBKAH NBWXO VBD XJBCN NKG QLKEIU DI XUI VIUI DKNV QNCWIANQ XN DXPIMKIZW VKHV QEVBBZ KA XUZKAHNBA FKUHKAKX XAW DI VXFI HBN QNCWIANQ NCAKAH KA MUBG XZZ XEUBQQ XGIUKEX MUBG PKAWIUHXUNIA NVUBCHV 12NV HUXWI XAW DI XUI SCQN QB HZXW NVXN XZZ EBCZW SBKA CQ NBWXO XAW DI DXAN NB NVXAP DXPIMKIZW MBU JIKAH QCEV XA BCNQNXAWKAH VBQN HKFI OBCUQIZFIQ X JKH UBCAW BM XLLZXCQI XAW NVI PIO KQ 640I11012805M211J0XJ24MM02X1IW09
+</code></pre>
+<p>直接暴力破解<br>
+<img src="https://cc-nianchu.github.io/post-images/1665625300075.png" alt="" loading="lazy"><br>
+附上连接<a href="https://www.quipqiup.com/">quipqiup爆破</a><br>
+flag{640e11012805f211b0ab24ff02a1ed09}</p>
 ]]></content>
     </entry>
     <entry>
